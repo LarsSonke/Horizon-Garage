@@ -26,4 +26,5 @@ export interface Car {
   zero: string;
   glbPath?: string;
   model3d?: boolean;
+  modelOffsetX?: number;
 }

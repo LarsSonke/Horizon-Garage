@@ -256,24 +256,24 @@ function CarScene({ car, index, active: _active, refSetter }: CarSceneProps) {
         outerRef.current = el;
         refSetter(el);
       }}
-      className={is3D ? 'relative' : 'min-h-screen flex items-center px-6 lg:px-12 py-24'}
-      style={is3D ? { height: '300vh' } : undefined}
+      className="min-h-screen flex items-center px-6 lg:px-12 py-24"
     >
       {is3D ? (
-        /* 300vh section: sticky viewport, ScrollCar fills the right column */
-        <div className="sticky top-0 h-screen flex items-center px-6 lg:px-12 overflow-hidden">
-          <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 items-center">
-            <CarMeta car={car} index={index} />
-            <div className="lg:col-span-7 h-[72vh]">
-              <ScrollCar
-                glbPath={car.glbPath!}
-                accent={car.accent}
-                accent2={car.accent2}
-                sectionRef={outerRef}
-                mode="scroll"
-                rotations={1.5}
-              />
-            </div>
+        /* Natural-scroll section: car spins as you scroll past, no page lock */
+        <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 items-center">
+          <CarMeta car={car} index={index} />
+          <div className="lg:col-span-7 h-[72vh]">
+            <ScrollCar
+              glbPath={car.glbPath!}
+              accent={car.accent}
+              accent2={car.accent2}
+              sectionRef={outerRef}
+              mode="scroll"
+              rotations={2}
+              triggerStart="top bottom"
+              triggerEnd="bottom top"
+              modelOffsetX={car.modelOffsetX}
+            />
           </div>
         </div>
       ) : (

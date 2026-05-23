@@ -12,7 +12,6 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import CarStage from '../components/CarStage';
 import ScrollCar from '../lib/ScrollCar';
-import Particles from '../components/Particles';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -164,14 +163,47 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
       {/* ── Vignette ── */}
       <div className="vignette absolute inset-0 pointer-events-none" />
 
+      {/* ── 3D car: full-bleed right side, floats over the background ── */}
+      <AnimatePresence>
+        {car.model3d && car.glbPath && (
+          <motion.div
+            key={`hero-3d-${car.id}`}
+            className="absolute inset-y-0 right-0 w-[72%] z-[1] pointer-events-none"
+            style={{ y: stageScrollY, x: stageOffX }}
+            initial={{ opacity: 0, filter: 'blur(20px)' }}
+            animate={{ opacity: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, filter: 'blur(20px)' }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.div style={{ y: stageOffY }} className="w-full h-full">
+              <ScrollCar
+                glbPath={car.glbPath}
+                accent={car.accent}
+                accent2={car.accent2}
+                mode="auto"
+                modelOffsetX={car.modelOffsetX}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Cinematic gradient: dark left → transparent right (3D only) ── */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none z-[2]"
+        animate={{ opacity: car.model3d ? 1 : 0 }}
+        transition={{ duration: 0.9 }}
+        style={{ background: 'linear-gradient(to right, #000 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.48) 50%, transparent 70%)' }}
+      />
+
       {/* ── Main content ── */}
       <div className="relative z-10 min-h-screen flex flex-col">
         <motion.div
           className="flex-1 grid lg:grid-cols-12 gap-6 px-6 lg:px-12 pt-32 lg:pt-36 pb-8"
           style={{ y: contentY, opacity: contentOp }}
         >
-          {/* Left column */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
+          {/* Left column — wider when 3D car fills the right side absolutely */}
+          <div className={`${car.model3d ? 'lg:col-span-5' : 'lg:col-span-4'} flex flex-col gap-6`}>
             <AnimatePresence mode="wait">
               <motion.div
                 key={`chip-${car.id}`}
@@ -240,52 +272,43 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
             </AnimatePresence>
           </div>
 
-          {/* Center: car stage with dual parallax */}
-          <div className="lg:col-span-8">
-            <motion.div
-              className="hero-stage-wrap relative"
-              style={{ y: stageScrollY, x: stageOffX }}
-            >
-              <motion.div style={{ y: stageOffY }}>
+          {/* Right: bordered CarStage (non-3D cars only — 3D uses the absolute canvas) */}
+          {!car.model3d && (
+            <div className="lg:col-span-8">
+              <motion.div
+                className="hero-stage-wrap relative"
+                style={{ y: stageScrollY, x: stageOffX }}
+              >
+                <motion.div style={{ y: stageOffY }}>
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={`stage-${car.id}`}
+                      initial={{ opacity: 0, scale: 0.96, filter: 'blur(16px)' }}
+                      animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                      exit={{ opacity: 0, scale: 1.03, filter: 'blur(16px)' }}
+                      transition={{ duration: 0.55, ease: EASE }}
+                    >
+                      <CarStage car={car} slotId={`hero-${car.id}`} label={`SHOWROOM · BAY 01 · ${car.sceneLabel}`} />
+                    </motion.div>
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* Tagline ribbon */}
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={`stage-${car.id}`}
-                    initial={{ opacity: 0, scale: 0.96, filter: 'blur(16px)' }}
-                    animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                    exit={{ opacity: 0, scale: 1.03, filter: 'blur(16px)' }}
-                    transition={{ duration: 0.55, ease: EASE }}
+                    key={`ribbon-${car.id}`}
+                    className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-4 py-1 bg-black border border-white/15 font-mono text-[10px] tracking-[0.3em] uppercase text-white/70 whitespace-nowrap z-10"
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.3, delay: 0.2 }}
                   >
-                    {car.model3d && car.glbPath ? (
-                      <div className="w-full h-[56vh]">
-                        <ScrollCar
-                          glbPath={car.glbPath}
-                          accent={car.accent}
-                          accent2={car.accent2}
-                          mode="auto"
-                        />
-                      </div>
-                    ) : (
-                      <CarStage car={car} slotId={`hero-${car.id}`} label={`SHOWROOM · BAY 01 · ${car.sceneLabel}`} />
-                    )}
+                    <span style={{ color: car.accent }}>"</span> {car.tagline} <span style={{ color: car.accent }}>"</span>
                   </motion.div>
                 </AnimatePresence>
               </motion.div>
-
-              {/* Tagline ribbon */}
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={`ribbon-${car.id}`}
-                  className="absolute -bottom-5 left-1/2 -translate-x-1/2 px-4 py-1 bg-black border border-white/15 font-mono text-[10px] tracking-[0.3em] uppercase text-white/70 whitespace-nowrap z-10"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
-                  <span style={{ color: car.accent }}>"</span> {car.tagline} <span style={{ color: car.accent }}>"</span>
-                </motion.div>
-              </AnimatePresence>
-            </motion.div>
-          </div>
+            </div>
+          )}
         </motion.div>
 
         {/* ── Stat strip ── */}
