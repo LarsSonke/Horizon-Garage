@@ -10,7 +10,6 @@ import Showcase from './sections/Showcase';
 import Services from './sections/Festival';
 import { Footer } from './sections/Festival';
 import Booking from './sections/Booking';
-import Process from './sections/Process';
 import CustomCursor from './components/CustomCursor';
 
 const MARQUEE_ITEMS = [
@@ -88,8 +87,6 @@ export default function App() {
       <Showcase cars={CARS} />
 
       <Services />
-
-      <Process />
 
       <Booking />
 

@@ -219,6 +219,7 @@ export default function ScrollCar({
     let raf: number;
     let lastT = performance.now();
     let visible = true;
+    let floatT = 0; // accumulated render time — avoids phase jump after tab switch
 
     const io = new IntersectionObserver(
       ([entry]) => { visible = entry.isIntersecting; },
@@ -228,10 +229,12 @@ export default function ScrollCar({
 
     const tick = (t: number) => {
       raf = requestAnimationFrame(tick);
-      if (!visible) return; // skip GPU work when not in viewport
 
+      // Always keep lastT current so dt is never huge on resume
       const dt = Math.min(0.05, (t - lastT) / 1000);
       lastT = t;
+
+      if (!visible || document.hidden) return;
 
       // Lerp mouse influence toward latest ref values
       if (mouseInfluenceRef?.current) {
@@ -242,6 +245,8 @@ export default function ScrollCar({
         mRoll  += (inf.roll  - mRoll)  * s;
       }
 
+      floatT += dt;
+
       if (model) {
         if (mode === 'auto') {
           currentYaw += dt * AUTO_SPEED;
@@ -251,7 +256,7 @@ export default function ScrollCar({
         model.rotation.y = currentYaw + mYaw;
         model.rotation.x = mPitch;
         model.rotation.z = mRoll;
-        model.position.y = Math.sin(t * 0.00065) * 0.055;
+        model.position.y = Math.sin(floatT * 0.65) * 0.055;
       }
 
       renderer.render(scene, camera);

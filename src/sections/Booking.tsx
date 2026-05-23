@@ -1,6 +1,22 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import emailjs from '@emailjs/browser';
+
+// Auto-format Dutch-style plates: groups letters vs numbers and inserts dashes between them.
+// AB123C → AB-123-C   |   AB12DC → AB-12-DC   |   1-ABC-23 stays as typed.
+function formatPlate(raw: string): string {
+  const clean = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 8);
+  if (!clean) return '';
+  const groups: string[] = [];
+  let cur = clean[0];
+  for (let i = 1; i < clean.length; i++) {
+    const sameType = /[A-Z]/.test(clean[i]) === /[A-Z]/.test(cur[cur.length - 1]);
+    if (sameType) cur += clean[i];
+    else { groups.push(cur); cur = clean[i]; }
+  }
+  groups.push(cur);
+  return groups.join('-');
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +28,7 @@ type BookingData = {
   model: string;
   year: string;
   mileage: string;
+  country: string;
   registration: string;
   issue: string;
   date: string;
@@ -24,10 +41,41 @@ type BookingData = {
 
 const EMPTY: BookingData = {
   service: '', serviceTitle: '', servicePrice: '',
-  make: '', model: '', year: '', mileage: '', registration: '', issue: '',
+  make: '', model: '', year: '', mileage: '', country: 'NL', registration: '', issue: '',
   date: '', timeSlot: '', collection: false,
   name: '', email: '', phone: '',
 };
+
+// ─── Plate countries ──────────────────────────────────────────────────────────
+
+const PLATE_COUNTRIES = [
+  { code: 'NL', name: 'Netherlands',    flag: '🇳🇱', bg: '#F5C400', text: '#000', eu: 'NL', rounded: true,  gb: false },
+  { code: 'DE', name: 'Germany',        flag: '🇩🇪', bg: '#ffffff', text: '#000', eu: 'D',  rounded: false, gb: false },
+  { code: 'BE', name: 'Belgium',        flag: '🇧🇪', bg: '#ffffff', text: '#000', eu: 'B',  rounded: false, gb: false },
+  { code: 'FR', name: 'France',         flag: '🇫🇷', bg: '#ffffff', text: '#000', eu: 'F',  rounded: false, gb: false },
+  { code: 'GB', name: 'United Kingdom', flag: '🇬🇧', bg: '#ffffff', text: '#000', eu: 'GB', rounded: true,  gb: true  },
+  { code: 'IT', name: 'Italy',          flag: '🇮🇹', bg: '#ffffff', text: '#000', eu: 'I',  rounded: false, gb: false },
+  { code: 'ES', name: 'Spain',          flag: '🇪🇸', bg: '#ffffff', text: '#000', eu: 'E',  rounded: false, gb: false },
+  { code: 'PL', name: 'Poland',         flag: '🇵🇱', bg: '#ffffff', text: '#000', eu: 'PL', rounded: false, gb: false },
+  { code: 'SE', name: 'Sweden',         flag: '🇸🇪', bg: '#ffffff', text: '#000', eu: 'S',  rounded: false, gb: false },
+  { code: 'US', name: 'United States',  flag: '🇺🇸', bg: '#ffffff', text: '#000', eu: null, rounded: true,  gb: false },
+  { code: 'XX', name: 'Other',          flag: '🌍',  bg: '#ffffff', text: '#000', eu: null, rounded: false, gb: false },
+] as const;
+
+type PlateCountry = typeof PLATE_COUNTRIES[number];
+const getCountry = (code: string): PlateCountry =>
+  PLATE_COUNTRIES.find(c => c.code === code) ?? PLATE_COUNTRIES[0];
+
+function formatForCountry(raw: string, country: string): string {
+  if (country === 'GB') {
+    const c = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 7);
+    return c.length > 4 ? `${c.slice(0, 4)} ${c.slice(4)}` : c;
+  }
+  if (country === 'US' || country === 'XX') {
+    return raw.replace(/[^A-Z0-9\- ]/gi, '').toUpperCase().slice(0, 10);
+  }
+  return formatPlate(raw); // EU: group consecutive letter/number runs with dashes
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -70,7 +118,7 @@ async function sendEmails(data: BookingData, reference: string) {
     service:      data.serviceTitle,
     price:        data.servicePrice,
     vehicle:      `${data.make} ${data.model} (${data.year})`,
-    registration: data.registration || '—',
+    registration: data.registration ? `${data.country} · ${data.registration}` : '—',
     mileage:      data.mileage ? `${data.mileage} km` : '—',
     date:         new Date(data.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
     time_slot:    TIME_SLOTS.find(t => t.id === data.timeSlot)?.time ?? data.timeSlot,
@@ -91,6 +139,116 @@ async function sendEmails(data: BookingData, reference: string) {
       ...common,
     }, pub);
   }
+}
+
+// ─── Plate Input ──────────────────────────────────────────────────────────────
+
+function PlateInput({ value, country, onChange }: { value: string; country: string; onChange: (v: string) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const el = e.target;
+    const raw = el.value;
+    const cursorBefore = el.selectionStart ?? raw.length;
+    const cleanBefore = raw.slice(0, cursorBefore).replace(/[^A-Z0-9]/gi, '').length;
+
+    const formatted = formatForCountry(raw, country);
+    onChange(formatted);
+
+    requestAnimationFrame(() => {
+      const input = inputRef.current;
+      if (!input) return;
+      let count = 0, pos = formatted.length;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/[A-Z0-9]/i.test(formatted[i])) count++;
+        if (count === cleanBefore) { pos = i + 1; break; }
+      }
+      input.setSelectionRange(pos, pos);
+    });
+  };
+
+  const placeholder = country === 'NL' ? 'AB-123-C' : country === 'GB' ? 'AB12 CDE' : country === 'DE' ? 'B-AB-1234' : 'PLATE';
+
+  return (
+    <input
+      ref={inputRef}
+      className="form-input uppercase tracking-widest"
+      placeholder={placeholder}
+      value={value}
+      onChange={handle}
+      maxLength={12}
+      spellCheck={false}
+      autoComplete="off"
+    />
+  );
+}
+
+function PlatePreview({ country, number }: { country: string; number: string }) {
+  const c = getCountry(country);
+  const display = number || (country === 'NL' ? 'AB-123-C' : country === 'GB' ? 'AB12 CDE' : 'EXAMPLE');
+
+  return (
+    <motion.div
+      key={country}
+      initial={{ opacity: 0, scale: 0.95, y: 6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
+      className="inline-flex items-stretch overflow-hidden"
+      style={{
+        borderRadius: c.rounded ? 8 : 3,
+        border: `2.5px solid ${c.bg === '#F5C400' ? '#111' : '#aaa'}`,
+        boxShadow: '0 6px 28px rgba(0,0,0,0.55)',
+        height: 58,
+      }}
+    >
+      {/* EU / GB strip */}
+      {c.eu && (
+        <div style={{
+          background: '#003399',
+          width: 42,
+          minWidth: 42,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          padding: '4px 0',
+        }}>
+          {c.gb ? (
+            <span style={{ fontSize: 18, lineHeight: 1 }}>🇬🇧</span>
+          ) : (
+            <>
+              <span style={{ color: '#FFD700', fontSize: 7, letterSpacing: 2, lineHeight: 1 }}>★★★★</span>
+              <span style={{ color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: 0.5, fontFamily: 'sans-serif', lineHeight: 1.2 }}>{c.eu}</span>
+              <span style={{ color: '#FFD700', fontSize: 7, letterSpacing: 2, lineHeight: 1 }}>★★★★</span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Number area */}
+      <div style={{
+        background: c.bg,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0 22px',
+        minWidth: 190,
+      }}>
+        <span style={{
+          color: c.text,
+          fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif',
+          fontWeight: 900,
+          fontSize: 26,
+          letterSpacing: '0.09em',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+        }}>
+          {display}
+        </span>
+      </div>
+    </motion.div>
+  );
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
@@ -279,9 +437,25 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
         <Field label="Mileage (km)">
           <input className="form-input" placeholder="e.g. 14500" type="number" min="0" value={data.mileage} onChange={e => update({ mileage: e.target.value })} />
         </Field>
-        <Field label="Registration Plate">
-          <input className="form-input" placeholder="e.g. AB-123-C" value={data.registration} onChange={e => update({ registration: e.target.value })} />
+        <Field label="Country">
+          <select
+            className="form-input"
+            value={data.country}
+            onChange={e => update({ country: e.target.value, registration: '' })}
+          >
+            {PLATE_COUNTRIES.map(c => (
+              <option key={c.code} value={c.code}>{c.flag}  {c.name}</option>
+            ))}
+          </select>
         </Field>
+        <Field label="Registration Plate">
+          <PlateInput value={data.registration} country={data.country} onChange={v => update({ registration: v })} />
+        </Field>
+        <div className="sm:col-span-2 flex justify-center pt-1 pb-2">
+          <AnimatePresence mode="wait">
+            <PlatePreview key={data.country} country={data.country} number={data.registration} />
+          </AnimatePresence>
+        </div>
         <Field label="Issue / Request" className="sm:col-span-2">
           <textarea className="form-input resize-none" rows={3} placeholder="Describe the issue or what you'd like done…" value={data.issue} onChange={e => update({ issue: e.target.value })} />
         </Field>
@@ -389,7 +563,7 @@ function ReviewStep({ data, onConfirm, onBack, dir, submitting }: any) {
     ['Service',         data.serviceTitle],
     ['Estimated Cost',  data.servicePrice],
     ['Vehicle',         `${data.make} ${data.model} (${data.year})`],
-    ['Registration',    data.registration || '—'],
+    ['Registration',    data.registration ? `${data.country} · ${data.registration}` : '—'],
     ['Mileage',         data.mileage ? `${data.mileage} km` : '—'],
     ['Date',            data.date ? new Date(data.date).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : '—'],
     ['Time',            slot ? `${slot.label} · ${slot.time}` : '—'],
