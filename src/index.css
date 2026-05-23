@@ -413,6 +413,21 @@ body { overflow-x: clip; }
 /* ─── SPLASH INTRO ───────────────────────────────────────────────────── */
 .splash { position: fixed; inset: 0; z-index: 9999; background: #000; display: flex; align-items: center; justify-content: center; }
 
+/* ─── FORM INPUTS ────────────────────────────────────────────────────── */
+.form-input {
+  width: 100%;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 12px;
+  color: rgba(255,255,255,0.9);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  transition: border-color 200ms;
+}
+.form-input:focus { outline: none; border-color: rgba(255,255,255,0.3); }
+.form-input::placeholder { color: rgba(255,255,255,0.22); }
+.form-input option { background: #07090e; color: white; }
+
 /* ─── MISC ───────────────────────────────────────────────────────────── */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }

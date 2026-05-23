@@ -24,6 +24,9 @@ export interface Car {
   drivetrain: string;
   weight: string;
   zero: string;
+  price?: string;
+  imgStatic?: string;
+  imgAction?: string;
   glbPath?: string;
   model3d?: boolean;
   modelOffsetX?: number;
