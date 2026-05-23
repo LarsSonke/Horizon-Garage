@@ -53,14 +53,23 @@ function ScrollProgress() {
 export default function App() {
   const [splashDone, setSplashDone] = useState(false);
   const [heroIdx, setHeroIdx] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setInterval>>();
+
+  const startTimer = useCallback(() => {
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setHeroIdx(i => (i + 1) % CARS.length), 9000);
+  }, []);
 
   useEffect(() => {
     if (!splashDone) return;
-    const t = setInterval(() => setHeroIdx(i => (i + 1) % CARS.length), 9000);
-    return () => clearInterval(t);
-  }, [splashDone]);
+    startTimer();
+    return () => clearInterval(timerRef.current);
+  }, [splashDone, startTimer]);
 
-  const handleSelectCar = useCallback((i: number) => setHeroIdx(i), []);
+  const handleSelectCar = useCallback((i: number) => {
+    setHeroIdx(i);
+    startTimer();
+  }, [startTimer]);
 
   return (
     <div className="relative grain">

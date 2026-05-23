@@ -130,23 +130,26 @@ function CarScene({ car, index, refSetter }: CarSceneProps) {
     <div
       id={`scene-${car.id}`}
       ref={(el) => { outerRef.current = el; refSetter(el); }}
-      className="min-h-screen flex items-center px-6 lg:px-12 py-24"
+      className="relative min-h-screen flex items-center overflow-hidden"
     >
-      <div className="max-w-7xl mx-auto w-full grid lg:grid-cols-12 gap-10 items-center">
+      {/* Full-viewport-width transparent canvas — car enters from the left screen edge */}
+      <div className="absolute inset-0">
+        <ScrollCar
+          glbPath={car.glbPath!}
+          accent={car.accent}
+          accent2={car.accent2}
+          sectionRef={outerRef}
+          mode="drivein"
+          rotations={1}
+          triggerStart="top bottom"
+          triggerEnd="bottom top"
+          modelOffsetX={car.modelOffsetX}
+        />
+      </div>
+
+      {/* Meta panel floats on top of transparent canvas */}
+      <div className="relative z-10 px-6 lg:px-12 py-24 max-w-xl">
         <CarMeta car={car} index={index} />
-        <div className="lg:col-span-7 h-[72vh]">
-          <ScrollCar
-            glbPath={car.glbPath!}
-            accent={car.accent}
-            accent2={car.accent2}
-            sectionRef={outerRef}
-            mode="scroll"
-            rotations={2}
-            triggerStart="top bottom"
-            triggerEnd="bottom top"
-            modelOffsetX={car.modelOffsetX}
-          />
-        </div>
       </div>
     </div>
   );

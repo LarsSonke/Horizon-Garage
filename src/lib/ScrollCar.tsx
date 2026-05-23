@@ -19,6 +19,36 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ─── Module-level GLB cache — shared across all ScrollCar instances ────────
+const _draco = new DRACOLoader();
+_draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+const _loader = new GLTFLoader();
+_loader.setDRACOLoader(_draco);
+
+const _cache = new Map<string, THREE.Group>();
+const _pending = new Map<string, Promise<THREE.Group>>();
+
+async function _loadGLB(path: string, onProgress?: (pct: number) => void): Promise<THREE.Group> {
+  if (_cache.has(path)) return _cache.get(path)!.clone();
+  if (_pending.has(path)) return (await _pending.get(path)!).clone();
+
+  const p = new Promise<THREE.Group>((resolve, reject) => {
+    _loader.load(
+      path,
+      (gltf) => { _cache.set(path, gltf.scene as THREE.Group); resolve(gltf.scene as THREE.Group); },
+      (ev) => { if (ev.lengthComputable && onProgress) onProgress(ev.loaded / ev.total); },
+      reject,
+    );
+  });
+  _pending.set(path, p.finally(() => _pending.delete(path)));
+  return (await _pending.get(path)!).clone();
+}
+
+/** Call early (e.g. on Hero mount) to warm the cache before ScrollCar needs it. */
+export function preloadGLB(path: string): void {
+  if (!_cache.has(path) && !_pending.has(path)) _loadGLB(path);
+}
+
 interface ScrollCarProps {
   glbPath: string;
   accent?: string;
@@ -27,13 +57,15 @@ interface ScrollCarProps {
   sectionRef?: React.RefObject<HTMLElement | null>;
   /** How many full rotations over the section scroll. Default: 1. */
   rotations?: number;
-  mode?: 'scroll' | 'auto';
+  mode?: 'scroll' | 'auto' | 'drivein';
   /** ScrollTrigger start value. Default: 'top top' */
   triggerStart?: string;
   /** ScrollTrigger end value. Default: 'bottom bottom' */
   triggerEnd?: string;
   /** Horizontal nudge applied after Box3 centering (Three.js units). Positive = right. */
   modelOffsetX?: number;
+  /** drivein mode: how far off-screen the car starts (Three.js units). Default: 15. */
+  driveInFromX?: number;
   /** Ref updated each mousemove — applied as additive pitch / roll / yaw on the model. */
   mouseInfluenceRef?: React.RefObject<{ yaw: number; pitch: number; roll: number }>;
   className?: string;
@@ -49,6 +81,7 @@ export default function ScrollCar({
   triggerStart = 'top top',
   triggerEnd = 'bottom bottom',
   modelOffsetX = 0,
+  driveInFromX = 15,
   mouseInfluenceRef,
   className = '',
 }: ScrollCarProps) {
@@ -129,26 +162,25 @@ export default function ScrollCar({
 
     // ─── Rotation state ───────────────────────────────────────────────
     let model: THREE.Group | null = null;
-    const START_YAW = 1.1; // side-on angle so livery stripes face camera on load
-    let currentYaw = START_YAW;
-    let targetYaw = START_YAW;
+    const START_YAW = 1.1;        // side-on rest angle — livery stripes face camera
+    const DRIVE_YAW = Math.PI / 2; // car faces +X = direction of travel when entering from left
+    const initYaw = mode === 'drivein' ? DRIVE_YAW : START_YAW;
+    let currentYaw = initYaw;
+    let targetYaw = initYaw;
     const AUTO_SPEED = 0.18; // rad/sec
 
     // Mouse-influence lerp targets (additive on top of base rotation)
     let mYaw = 0, mPitch = 0, mRoll = 0;
 
-    // ─── Load GLB ─────────────────────────────────────────────────────
-    const draco = new DRACOLoader();
-    draco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(draco);
+    // Drive-in state — car starts off-screen LEFT, drives right to center
+    let baseX = 0;                                          // resting X, captured after load
+    let targetDriveX = mode === 'drivein' ? -driveInFromX : 0;
+    let currentDriveX = targetDriveX;
 
-    loader.load(
-      glbPath,
-      (gltf) => {
+    // ─── Load GLB (uses module-level cache — instant on repeat visits) ──
+    _loadGLB(glbPath, (pct) => { if (!disposed) setLoadPct(pct); })
+      .then((obj) => {
         if (disposed) return;
-
-        const obj = gltf.scene;
 
         // Centre, sit on floor, scale uniformly to ~4.4 units wide
         const box = new THREE.Box3().setFromObject(obj);
@@ -163,43 +195,53 @@ export default function ScrollCar({
           if (!(node instanceof THREE.Mesh)) return;
           node.castShadow = true;
           node.receiveShadow = true;
-          const mats = Array.isArray(node.material)
-            ? node.material
-            : [node.material];
+          const mats = Array.isArray(node.material) ? node.material : [node.material];
           mats.forEach((m) => {
             const std = m as THREE.MeshStandardMaterial;
             if (std.envMapIntensity === undefined) return;
-            // Glass/transparent surfaces keep a reflection; opaque paint gets none
-            // so the white RoomEnvironment cannot wash out the livery colours.
             std.envMapIntensity = std.transparent || std.opacity < 0.95 ? 0.6 : 0.0;
             std.needsUpdate = true;
           });
         });
 
         scene.add(obj);
-        model = obj as THREE.Group;
-        if (!disposed) setLoaded(true);
-      },
-      (ev) => {
-        if (ev.lengthComputable) setLoadPct(ev.loaded / ev.total);
-      },
-      (err) => console.error('ScrollCar: load failed', err),
-    );
+        model = obj;
+        baseX = model.position.x;
+        if (mode === 'drivein') model.position.x = baseX + currentDriveX;
+        setLoaded(true);
+      })
+      .catch((err) => console.error('ScrollCar: load failed', err));
 
     // ─── GSAP ScrollTrigger (scroll mode) ────────────────────────────
     let st: ScrollTrigger | null = null;
 
-    if (mode === 'scroll' && sectionRef?.current) {
+    if ((mode === 'scroll' || mode === 'drivein') && sectionRef?.current) {
       st = ScrollTrigger.create({
         trigger: sectionRef.current,
         start: triggerStart,
         end: triggerEnd,
         onUpdate: (self) => {
-          // Fast at viewport edges, slow when centered — sinusoidal easing
           const p = self.progress;
           const A = 0.65;
-          const eased = p + A * Math.sin(2 * Math.PI * p) / (2 * Math.PI);
-          targetYaw = START_YAW + eased * Math.PI * 2 * rotations;
+
+          if (mode === 'drivein') {
+            // First 45 % of scroll: car drives in from left (+X direction), yaw eases from DRIVE_YAW → START_YAW
+            const SPLIT = 0.45;
+            if (p <= SPLIT) {
+              const ease = 1 - Math.pow(1 - p / SPLIT, 3); // cubic ease-out
+              targetDriveX = -driveInFromX * (1 - ease);   // -driveInFromX → 0
+              targetYaw = DRIVE_YAW + (START_YAW - DRIVE_YAW) * ease;
+            } else {
+              // Remaining 55 %: car parked, slow rotation from START_YAW
+              targetDriveX = 0;
+              const rotP = (p - SPLIT) / (1 - SPLIT);
+              const eased = rotP + A * Math.sin(2 * Math.PI * rotP) / (2 * Math.PI);
+              targetYaw = START_YAW + eased * Math.PI * rotations;
+            }
+          } else {
+            const eased = p + A * Math.sin(2 * Math.PI * p) / (2 * Math.PI);
+            targetYaw = START_YAW + eased * Math.PI * 2 * rotations;
+          }
         },
       });
     }
@@ -253,6 +295,10 @@ export default function ScrollCar({
         } else {
           currentYaw += (targetYaw - currentYaw) * Math.min(1, dt * 7);
         }
+        if (mode === 'drivein') {
+          currentDriveX += (targetDriveX - currentDriveX) * Math.min(1, dt * 5);
+          model.position.x = baseX + currentDriveX;
+        }
         model.rotation.y = currentYaw + mYaw;
         model.rotation.x = mPitch;
         model.rotation.z = mRoll;
@@ -271,7 +317,7 @@ export default function ScrollCar({
       io.disconnect();
       renderer.dispose();
     };
-  }, [glbPath, accent, accent2, mode, rotations, triggerStart, triggerEnd, modelOffsetX]);
+  }, [glbPath, accent, accent2, mode, rotations, triggerStart, triggerEnd, modelOffsetX, driveInFromX]);
 
   return (
     <div className={`relative w-full h-full ${className}`}>

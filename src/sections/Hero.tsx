@@ -10,7 +10,7 @@ import {
 } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import ScrollCar from '../lib/ScrollCar';
+import ScrollCar, { preloadGLB } from '../lib/ScrollCar';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -57,6 +57,10 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
   const stageScrollY = useTransform(scrollYProgress, [0, 1], [0, -180]);
   const contentY    = useTransform(scrollYProgress, [0, 1], [0, -90]);
   const contentOp   = useTransform(scrollYProgress, [0, 0.65], [1, 0]);
+
+  useEffect(() => {
+    cars.forEach(c => { if (c.glbPath) preloadGLB(c.glbPath); });
+  }, [cars]);
 
   const entranceDone = useRef(false);
   useEffect(() => {
@@ -108,8 +112,8 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
             style={{ y: stageScrollY, x: stageOffX }}
             initial={{ opacity: 0, filter: 'blur(20px)' }}
             animate={{ opacity: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(20px)' }}
-            transition={{ duration: 0.8 }}
+            exit={{ opacity: 0, filter: 'blur(20px)', transition: { duration: 0.3 } }}
+            transition={{ duration: 0.6 }}
           >
             <motion.div style={{ y: stageOffY }} className="w-full h-full">
               <ScrollCar

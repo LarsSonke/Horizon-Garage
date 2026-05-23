@@ -67,14 +67,15 @@ const getCountry = (code: string): PlateCountry =>
   PLATE_COUNTRIES.find(c => c.code === code) ?? PLATE_COUNTRIES[0];
 
 function formatForCountry(raw: string, country: string): string {
+  const clean = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase();
   if (country === 'GB') {
-    const c = raw.replace(/[^A-Z0-9]/gi, '').toUpperCase().slice(0, 7);
-    return c.length > 4 ? `${c.slice(0, 4)} ${c.slice(4)}` : c;
+    const c = clean.slice(0, 7);
+    return c.length > 4 ? `${c.slice(0, 4)}-${c.slice(4)}` : c;
   }
   if (country === 'US' || country === 'XX') {
-    return raw.replace(/[^A-Z0-9\- ]/gi, '').toUpperCase().slice(0, 10);
+    return clean.slice(0, 10);
   }
-  return formatPlate(raw); // EU: group consecutive letter/number runs with dashes
+  return formatPlate(raw);
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -146,28 +147,28 @@ async function sendEmails(data: BookingData, reference: string) {
 function PlateInput({ value, country, onChange }: { value: string; country: string; onChange: (v: string) => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const el = e.target;
-    const raw = el.value;
-    const cursorBefore = el.selectionStart ?? raw.length;
-    const cleanBefore = raw.slice(0, cursorBefore).replace(/[^A-Z0-9]/gi, '').length;
-
-    const formatted = formatForCountry(raw, country);
-    onChange(formatted);
-
-    requestAnimationFrame(() => {
-      const input = inputRef.current;
-      if (!input) return;
-      let count = 0, pos = formatted.length;
-      for (let i = 0; i < formatted.length; i++) {
-        if (/[A-Z0-9]/i.test(formatted[i])) count++;
-        if (count === cleanBefore) { pos = i + 1; break; }
-      }
-      input.setSelectionRange(pos, pos);
-    });
+  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === ' ') {
+      e.preventDefault();
+      const el = inputRef.current;
+      if (!el) return;
+      const s = el.selectionStart ?? value.length;
+      const end = el.selectionEnd ?? s;
+      onChange((value.slice(0, s) + '-' + value.slice(end)).toUpperCase());
+      requestAnimationFrame(() => el.setSelectionRange(s + 1, s + 1));
+    }
   };
 
-  const placeholder = country === 'NL' ? 'AB-123-C' : country === 'GB' ? 'AB12 CDE' : country === 'DE' ? 'B-AB-1234' : 'PLATE';
+  const handle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.value.toUpperCase().replace(/[^A-Z0-9\-]/g, '').slice(0, 12));
+  };
+
+  const onPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    onChange(formatForCountry(e.clipboardData.getData('text'), country));
+  };
+
+  const placeholder = country === 'NL' ? 'AB-123-C' : country === 'GB' ? 'AB12-CDE' : country === 'DE' ? 'B-AB-1234' : 'PLATE';
 
   return (
     <input
@@ -175,7 +176,9 @@ function PlateInput({ value, country, onChange }: { value: string; country: stri
       className="form-input uppercase tracking-widest"
       placeholder={placeholder}
       value={value}
+      onKeyDown={onKeyDown}
       onChange={handle}
+      onPaste={onPaste}
       maxLength={12}
       spellCheck={false}
       autoComplete="off"
@@ -183,69 +186,130 @@ function PlateInput({ value, country, onChange }: { value: string; country: stri
   );
 }
 
+function StarCircle() {
+  const pts = Array.from({ length: 12 }, (_, i) => {
+    const a = (i / 12) * 2 * Math.PI - Math.PI / 2;
+    return { x: 12 + 8.2 * Math.cos(a), y: 12 + 8.2 * Math.sin(a) };
+  });
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" style={{ display: 'block' }}>
+      {pts.map((p, i) => (
+        <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fill="#FFD700" fontSize="4.2">★</text>
+      ))}
+    </svg>
+  );
+}
+
 function PlatePreview({ country, number }: { country: string; number: string }) {
   const c = getCountry(country);
-  const display = number || (country === 'NL' ? 'AB-123-C' : country === 'GB' ? 'AB12 CDE' : 'EXAMPLE');
+  const isYellow = c.bg === '#F5C400';
+
+  const displayText = number
+    ? (country === 'GB' ? number.replace(/-/g, ' ') : number)
+    : (country === 'NL' ? 'AB-123-C' : country === 'GB' ? 'AB12 CDE' : 'EXAMPLE');
+
+  // Rich directional gradient — lighter top-left, darker bottom-right
+  const plateGradient = isYellow
+    ? 'linear-gradient(145deg, #fde94e 0%, #f5cc00 28%, #e8b500 62%, #d9a200 100%)'
+    : 'linear-gradient(145deg, #ffffff 0%, #f5f5f5 30%, #ebebeb 70%, #e0e0e0 100%)';
+
+  // Metallic frame: light top edge, very dark body, slight lift at bottom
+  const frameGradient = 'linear-gradient(160deg, #686868 0%, #0c0c0c 48%, #343434 100%)';
+
+  const radius = c.rounded ? 7 : 2;
+  const boltBg = isYellow ? 'rgba(0,0,0,0.22)' : 'rgba(0,0,0,0.12)';
 
   return (
     <motion.div
-      key={country}
-      initial={{ opacity: 0, scale: 0.95, y: 6 }}
+      initial={{ opacity: 0, scale: 0.94, y: 8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.94, y: -8 }}
       transition={{ duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="inline-flex items-stretch overflow-hidden"
+      // Gradient background acts as the border frame
       style={{
-        borderRadius: c.rounded ? 8 : 3,
-        border: `2.5px solid ${c.bg === '#F5C400' ? '#111' : '#aaa'}`,
-        boxShadow: '0 6px 28px rgba(0,0,0,0.55)',
-        height: 58,
+        display: 'inline-flex',
+        background: frameGradient,
+        padding: '3px',
+        borderRadius: radius + 4,
+        boxShadow: '0 6px 24px rgba(0,0,0,0.55), 0 22px 64px rgba(0,0,0,0.4)',
       }}
     >
-      {/* EU / GB strip */}
-      {c.eu && (
+      {/* Inner plate */}
+      <div style={{
+        display: 'inline-flex',
+        alignItems: 'stretch',
+        overflow: 'hidden',
+        borderRadius: radius,
+        height: 70,
+      }}>
+        {/* EU / GB strip */}
+        {c.eu && (
+          <div style={{
+            background: '#003399',
+            width: 40,
+            minWidth: 40,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            paddingTop: 6,
+            paddingBottom: 6,
+            borderRight: `1px solid ${isYellow ? 'rgba(0,0,0,0.28)' : 'rgba(0,0,0,0.2)'}`,
+          }}>
+            {c.gb ? (
+              <>
+                <span style={{ fontSize: 17, lineHeight: 1 }}>🇬🇧</span>
+                <span style={{ color: '#fff', fontSize: 9, fontWeight: 700, letterSpacing: 1, fontFamily: 'Arial, sans-serif', lineHeight: 1, marginTop: 2 }}>GB</span>
+              </>
+            ) : (
+              <>
+                <StarCircle />
+                <span style={{ color: '#fff', fontSize: 9, fontWeight: 800, letterSpacing: 1.5, fontFamily: 'Arial, sans-serif', lineHeight: 1 }}>{c.eu}</span>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Plate body */}
         <div style={{
-          background: '#003399',
-          width: 42,
-          minWidth: 42,
+          background: plateGradient,
           display: 'flex',
-          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: 2,
-          padding: '4px 0',
+          padding: '0 32px',
+          position: 'relative',
+          minWidth: 210,
+          // Top gloss highlight + bottom shadow = physical surface feel
+          boxShadow: isYellow
+            ? 'inset 0 2px 5px rgba(255,255,255,0.45), inset 0 -2px 5px rgba(0,0,0,0.14)'
+            : 'inset 0 2px 5px rgba(255,255,255,0.6),  inset 0 -2px 5px rgba(0,0,0,0.08)',
         }}>
-          {c.gb ? (
-            <span style={{ fontSize: 18, lineHeight: 1 }}>🇬🇧</span>
-          ) : (
-            <>
-              <span style={{ color: '#FFD700', fontSize: 7, letterSpacing: 2, lineHeight: 1 }}>★★★★</span>
-              <span style={{ color: '#fff', fontSize: 10, fontWeight: 700, letterSpacing: 0.5, fontFamily: 'sans-serif', lineHeight: 1.2 }}>{c.eu}</span>
-              <span style={{ color: '#FFD700', fontSize: 7, letterSpacing: 2, lineHeight: 1 }}>★★★★</span>
-            </>
-          )}
-        </div>
-      )}
+          {/* Bolt holes */}
+          <div style={{
+            position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)',
+            width: 9, height: 9, borderRadius: '50%',
+            background: boltBg, boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.45)',
+          }} />
+          <div style={{
+            position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+            width: 9, height: 9, borderRadius: '50%',
+            background: boltBg, boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.45)',
+          }} />
 
-      {/* Number area */}
-      <div style={{
-        background: c.bg,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 22px',
-        minWidth: 190,
-      }}>
-        <span style={{
-          color: c.text,
-          fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif',
-          fontWeight: 900,
-          fontSize: 26,
-          letterSpacing: '0.09em',
-          userSelect: 'none',
-          whiteSpace: 'nowrap',
-        }}>
-          {display}
-        </span>
+          <span style={{
+            color: '#111',
+            fontFamily: '"Arial Black", "Arial Bold", Arial, sans-serif',
+            fontWeight: 900,
+            fontSize: 30,
+            letterSpacing: '0.07em',
+            userSelect: 'none',
+            whiteSpace: 'nowrap',
+            textShadow: isYellow ? '0 1px 0 rgba(0,0,0,0.14)' : '0 1px 0 rgba(0,0,0,0.09)',
+          }}>
+            {displayText}
+          </span>
+        </div>
       </div>
     </motion.div>
   );
