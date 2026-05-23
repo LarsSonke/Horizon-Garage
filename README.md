@@ -2,6 +2,8 @@
 
 A cinematic automotive portfolio built with React, Three.js, and GSAP. Features scroll-driven 3D car showcases, a service booking form, and a live licence plate preview — all running as a client-side SPA.
 
+<video src="https://github.com/LarsSonke/Horizon-Garage/raw/main/public/videos/preview.mp4" autoplay loop muted playsinline width="100%"></video>
+
 ![Vite](https://img.shields.io/badge/Vite-6-646CFF?logo=vite&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
