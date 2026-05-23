@@ -17,6 +17,12 @@
 html, body { background: var(--bg-0); color: var(--ink); -webkit-font-smoothing: antialiased; }
 body { overflow-x: clip; }
 
+/* Custom cursor — hide system cursor on pointer devices, restore on form fields */
+@media (hover: hover) {
+  *, *::before, *::after { cursor: none !important; }
+  input, textarea, select { cursor: text !important; }
+}
+
 /* ─── TYPOGRAPHY UTILS ───────────────────────────────────────────────── */
 .font-display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
 .font-mono    { font-family: 'JetBrains Mono', monospace; }

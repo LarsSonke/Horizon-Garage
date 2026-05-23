@@ -34,6 +34,8 @@ interface ScrollCarProps {
   triggerEnd?: string;
   /** Horizontal nudge applied after Box3 centering (Three.js units). Positive = right. */
   modelOffsetX?: number;
+  /** Ref updated each mousemove — applied as additive pitch / roll / yaw on the model. */
+  mouseInfluenceRef?: React.RefObject<{ yaw: number; pitch: number; roll: number }>;
   className?: string;
 }
 
@@ -47,6 +49,7 @@ export default function ScrollCar({
   triggerStart = 'top top',
   triggerEnd = 'bottom bottom',
   modelOffsetX = 0,
+  mouseInfluenceRef,
   className = '',
 }: ScrollCarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -75,8 +78,8 @@ export default function ScrollCar({
     const scene = new THREE.Scene();
     // scene.background stays null → transparent
 
-    // Narrower FOV + pulled back so wide cars never clip the frame
-    const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 100);
+    // FOV wide enough that the car never clips at any rotation angle
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
     camera.position.set(3.5, 1.4, 8.5);
     camera.lookAt(0, 0.7, 0);
 
@@ -130,6 +133,9 @@ export default function ScrollCar({
     let currentYaw = START_YAW;
     let targetYaw = START_YAW;
     const AUTO_SPEED = 0.18; // rad/sec
+
+    // Mouse-influence lerp targets (additive on top of base rotation)
+    let mYaw = 0, mPitch = 0, mRoll = 0;
 
     // ─── Load GLB ─────────────────────────────────────────────────────
     const draco = new DRACOLoader();
@@ -227,13 +233,24 @@ export default function ScrollCar({
       const dt = Math.min(0.05, (t - lastT) / 1000);
       lastT = t;
 
+      // Lerp mouse influence toward latest ref values
+      if (mouseInfluenceRef?.current) {
+        const inf = mouseInfluenceRef.current;
+        const s = Math.min(1, dt * 2.2);
+        mYaw   += (inf.yaw   - mYaw)   * s;
+        mPitch += (inf.pitch - mPitch) * s;
+        mRoll  += (inf.roll  - mRoll)  * s;
+      }
+
       if (model) {
         if (mode === 'auto') {
           currentYaw += dt * AUTO_SPEED;
         } else {
           currentYaw += (targetYaw - currentYaw) * Math.min(1, dt * 7);
         }
-        model.rotation.y = currentYaw;
+        model.rotation.y = currentYaw + mYaw;
+        model.rotation.x = mPitch;
+        model.rotation.z = mRoll;
         model.position.y = Math.sin(t * 0.00065) * 0.055;
       }
 

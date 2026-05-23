@@ -32,10 +32,19 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
   const smoothX = useSpring(rawX, { stiffness: 40, damping: 18 });
   const smoothY = useSpring(rawY, { stiffness: 40, damping: 18 });
 
+  // Passed into ScrollCar so the Three.js model itself reacts to the mouse
+  const mouseInfluenceRef = useRef({ yaw: 0, pitch: 0, roll: 0 });
+
   useEffect(() => {
     const handler = (e) => {
-      rawX.set(e.clientX / window.innerWidth - 0.5);
-      rawY.set(e.clientY / window.innerHeight - 0.5);
+      const nx = e.clientX / window.innerWidth  - 0.5; // -0.5 → 0.5
+      const ny = e.clientY / window.innerHeight - 0.5;
+      rawX.set(nx);
+      rawY.set(ny);
+      // Update model rotation targets (small values = subtle tilt)
+      mouseInfluenceRef.current.yaw   =  nx *  0.55; // ±0.275 rad  (~16°) side bias
+      mouseInfluenceRef.current.pitch =  ny *  0.28; // ±0.14  rad  (~8°)  nose up/down
+      mouseInfluenceRef.current.roll  = -nx *  0.10; // ±0.05  rad  (~3°)  lean
     };
     window.addEventListener('mousemove', handler, { passive: true });
     return () => window.removeEventListener('mousemove', handler);
@@ -95,7 +104,7 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
         {car.model3d && car.glbPath && (
           <motion.div
             key={`hero-3d-${car.id}`}
-            className="absolute inset-y-0 right-0 w-[72%] z-[1] pointer-events-none"
+            className="absolute inset-y-0 right-0 w-[82%] z-[1] pointer-events-none"
             style={{ y: stageScrollY, x: stageOffX }}
             initial={{ opacity: 0, filter: 'blur(20px)' }}
             animate={{ opacity: 1, filter: 'blur(0px)' }}
@@ -109,6 +118,7 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
                 accent2={car.accent2}
                 mode="auto"
                 modelOffsetX={car.modelOffsetX}
+                mouseInfluenceRef={mouseInfluenceRef}
               />
             </motion.div>
           </motion.div>

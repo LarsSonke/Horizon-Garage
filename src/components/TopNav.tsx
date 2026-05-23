@@ -10,11 +10,27 @@ const NAV_LINKS = [
 
 export default function TopNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [active,   setActive]   = useState('showroom');
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 40);
     window.addEventListener('scroll', handler, { passive: true });
     return () => window.removeEventListener('scroll', handler);
+  }, []);
+
+  useEffect(() => {
+    const ids = NAV_LINKS.map(l => l.href.slice(1));
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const hit = entries
+          .filter(e => e.isIntersecting)
+          .sort((a, b) => Math.abs(a.boundingClientRect.top) - Math.abs(b.boundingClientRect.top));
+        if (hit.length > 0) setActive(hit[0].target.id);
+      },
+      { rootMargin: '-15% 0px -60% 0px' },
+    );
+    ids.forEach(id => { const el = document.getElementById(id); if (el) obs.observe(el); });
+    return () => obs.disconnect();
   }, []);
 
   return (
@@ -24,23 +40,34 @@ export default function TopNav() {
         animate={{ background: scrolled ? 'rgba(0,0,0,0.88)' : 'rgba(0,0,0,0)' }}
         transition={{ duration: 0.4 }}
       >
-        <a href="#showroom" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 border border-white/30 rotate-45 grid place-items-center">
-            <div className="w-2 h-2 bg-white rotate-45" />
-          </div>
-          <div>
-            <div className="font-display text-2xl leading-none tracking-wider">HORIZON</div>
-            <div className="font-mono text-[10px] text-white/40 tracking-[0.3em] mt-0.5">GARAGE · EST. 2026</div>
-          </div>
+        <a href="#showroom">
+          <img src="/images/horizon-garage-logo.png" alt="Horizon Garage" className="h-14 w-auto" />
         </a>
 
         <nav className="hidden md:flex items-center gap-8 font-mono text-[11px] tracking-[0.22em] text-white/70 uppercase">
-          {NAV_LINKS.map(({ label, href }) => (
-            <a key={label} href={href} className="hover:text-white transition-colors relative group">
-              {label}
-              <span className="absolute -bottom-1 left-0 w-0 h-px bg-white group-hover:w-full transition-all duration-300" />
-            </a>
-          ))}
+          {NAV_LINKS.map(({ label, href }) => {
+            const isActive = active === href.slice(1);
+            return (
+              <a
+                key={label}
+                href={href}
+                className="relative transition-colors duration-200"
+                style={{ color: isActive ? 'white' : undefined }}
+              >
+                {label}
+                <motion.span
+                  className="absolute -bottom-1 left-0 h-px"
+                  style={{ background: '#007FFF' }}
+                  animate={{ width: isActive ? '100%' : '0%' }}
+                  transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
+                />
+                {/* hover underline for non-active */}
+                {!isActive && (
+                  <span className="absolute -bottom-1 left-0 w-0 h-px bg-white/40 group-hover:w-full transition-all duration-300" />
+                )}
+              </a>
+            );
+          })}
         </nav>
 
         <a

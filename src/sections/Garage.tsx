@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Car } from '../types';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
@@ -56,6 +56,8 @@ function FleetHeader() {
 
 function FleetCard({ car, index }: { car: Car; index: number }) {
   const [hovered, setHovered] = useState(false);
+  const tiltRef  = useRef<HTMLDivElement>(null);
+  const glareRef = useRef<HTMLDivElement>(null);
   const hasImages = !!(car.imgStatic && car.imgAction);
 
   const specs = [
@@ -64,13 +66,48 @@ function FleetCard({ car, index }: { car: Car; index: number }) {
     ['WEIGHT',  car.weight],
   ];
 
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el    = tiltRef.current;
+    const glare = glareRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const px   = (e.clientX - rect.left) / rect.width;   // 0–1
+    const py   = (e.clientY - rect.top)  / rect.height;
+    const rx   = (px - 0.5) * 2;                          // -1 to 1
+    const ry   = (py - 0.5) * 2;
+    el.style.transition = 'none';
+    el.style.transform  = `perspective(900px) rotateY(${rx * 5}deg) rotateX(${-ry * 5}deg) scale3d(1.02,1.02,1.02)`;
+    el.style.boxShadow  = `0 20px 60px rgba(0,0,0,0.5), 0 0 40px ${car.accent}18`;
+    if (glare) {
+      glare.style.background = `radial-gradient(circle at ${px * 100}% ${py * 100}%, rgba(255,255,255,0.10) 0%, transparent 55%)`;
+      glare.style.opacity    = '1';
+    }
+  };
+
+  const onMouseLeave = () => {
+    const el    = tiltRef.current;
+    const glare = glareRef.current;
+    if (el) {
+      el.style.transition = 'transform 0.7s cubic-bezier(0.25,0.46,0.45,0.94), box-shadow 0.5s ease';
+      el.style.transform  = 'perspective(900px) rotateY(0deg) rotateX(0deg) scale3d(1,1,1)';
+      el.style.boxShadow  = '';
+    }
+    if (glare) glare.style.opacity = '0';
+    setHovered(false);
+  };
+
   return (
     <div
-      className="fleet-card flex flex-col rounded-2xl overflow-hidden border border-white/10 cursor-pointer group"
-      style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%), #07090e' }}
+      className="fleet-card"
+      onMouseMove={onMouseMove}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseLeave={onMouseLeave}
     >
+      <div
+        ref={tiltRef}
+        className="relative flex flex-col h-full rounded-2xl overflow-hidden border border-white/10 cursor-pointer group"
+        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0) 100%), #07090e', willChange: 'transform' }}
+      >
       {/* Image area */}
       <div className="relative aspect-[4/3] overflow-hidden">
         {hasImages ? (
@@ -182,6 +219,14 @@ function FleetCard({ car, index }: { car: Car; index: number }) {
         >
           Enquire Now
         </a>
+      </div>
+
+      {/* Mouse-follow glare */}
+      <div
+        ref={glareRef}
+        className="absolute inset-0 pointer-events-none z-20 rounded-2xl"
+        style={{ opacity: 0, mixBlendMode: 'screen', transition: 'opacity 0.3s' }}
+      />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, useScroll } from 'framer-motion';
 import { CARS } from './data/cars';
 import TopNav from './components/TopNav';
@@ -10,6 +10,8 @@ import Showcase from './sections/Showcase';
 import Services from './sections/Festival';
 import { Footer } from './sections/Festival';
 import Booking from './sections/Booking';
+import Process from './sections/Process';
+import CustomCursor from './components/CustomCursor';
 
 const MARQUEE_ITEMS = [
   'FREE DIAGNOSTICS WITH ANY BOOKING',
@@ -20,6 +22,20 @@ const MARQUEE_ITEMS = [
   'MOT APPROVED CENTRE',
   'PREMIUM VEHICLES FOR SALE',
 ];
+
+function CursorSpotlight() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const onMove = (e: MouseEvent) => {
+      el.style.background = `radial-gradient(700px circle at ${e.clientX}px ${e.clientY}px, rgba(0,127,255,0.055), transparent 40%)`;
+    };
+    window.addEventListener('mousemove', onMove, { passive: true });
+    return () => window.removeEventListener('mousemove', onMove);
+  }, []);
+  return <div ref={ref} className="fixed inset-0 pointer-events-none z-[3]" />;
+}
 
 function ScrollProgress() {
   const { scrollYProgress } = useScroll();
@@ -49,6 +65,8 @@ export default function App() {
 
   return (
     <div className="relative grain">
+      <CustomCursor />
+      <CursorSpotlight />
       <ScrollProgress />
 
       {!splashDone && <Splash onDone={() => setSplashDone(true)} />}
@@ -70,6 +88,8 @@ export default function App() {
       <Showcase cars={CARS} />
 
       <Services />
+
+      <Process />
 
       <Booking />
 
