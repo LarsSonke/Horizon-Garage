@@ -193,6 +193,54 @@ export default function ScrollCar({
     let targetDriveX = mode === 'drivein' ? -driveInFromX : 0;
     let currentDriveX = targetDriveX;
 
+    // ─── Drag-to-spin (mode="auto" only) ──────────────────────────────
+    let isDragging    = false;
+    let autoRotating  = true;
+    let yawAtDragStart = 0;
+    let dragStartX    = 0;
+    let dragStartY    = 0;
+    let dragPitch     = 0;      // vertical drag tilt, lerps back to 0 on release
+    let resumeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const SENS_YAW   = 0.012;  // rad / px  — one full swipe ≈ full spin
+    const SENS_PITCH = 0.007;
+    const MAX_PITCH  = 0.65;   // ±37° clamp so car never flips upside-down
+
+    const onPointerDown = (e: PointerEvent) => {
+      isDragging = true;
+      autoRotating = false;
+      yawAtDragStart = currentYaw;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      canvas.setPointerCapture(e.pointerId); // track even if pointer leaves canvas
+      canvas.style.cursor = 'grabbing';
+      document.body.style.userSelect = 'none';
+      if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
+    };
+
+    const onPointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      currentYaw  = yawAtDragStart + (e.clientX - dragStartX) * SENS_YAW;
+      dragPitch   = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, (e.clientY - dragStartY) * SENS_PITCH));
+    };
+
+    const onPointerUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      canvas.style.cursor = 'grab';
+      document.body.style.userSelect = '';
+      resumeTimer = setTimeout(() => { autoRotating = true; }, 2500);
+    };
+
+    if (mode === 'auto') {
+      canvas.style.pointerEvents = 'auto';
+      canvas.style.cursor = 'grab';
+      canvas.addEventListener('pointerdown', onPointerDown);
+      canvas.addEventListener('pointermove', onPointerMove);
+      canvas.addEventListener('pointerup',   onPointerUp);
+      canvas.addEventListener('pointercancel', onPointerUp);
+    }
+
     // ─── Load GLB (uses module-level cache — instant on repeat visits) ──
     _loadGLB(glbPath, (pct) => { if (!disposed) setLoadPct(pct); })
       .then((obj) => {
@@ -314,7 +362,9 @@ export default function ScrollCar({
 
       if (model) {
         if (mode === 'auto') {
-          currentYaw += dt * AUTO_SPEED;
+          if (!isDragging && autoRotating) currentYaw += dt * AUTO_SPEED;
+          // Lerp drag pitch back to neutral after release
+          if (!isDragging) dragPitch += (0 - dragPitch) * Math.min(1, dt * 4);
         } else {
           currentYaw += (targetYaw - currentYaw) * Math.min(1, dt * 7);
         }
@@ -322,9 +372,9 @@ export default function ScrollCar({
           currentDriveX += (targetDriveX - currentDriveX) * Math.min(1, dt * 5);
           model.position.x = baseX + currentDriveX;
         }
-        model.rotation.y = currentYaw + mYaw;
-        model.rotation.x = mPitch;
-        model.rotation.z = mRoll;
+        model.rotation.y = currentYaw + (isDragging ? 0 : mYaw);
+        model.rotation.x = dragPitch + (isDragging ? 0 : mPitch);
+        model.rotation.z = isDragging ? 0 : mRoll;
         model.position.y = Math.sin(floatT * 0.65) * 0.055;
       }
 
@@ -339,6 +389,14 @@ export default function ScrollCar({
       ro.disconnect();
       io.disconnect();
       renderer.dispose();
+      if (mode === 'auto') {
+        canvas.removeEventListener('pointerdown',  onPointerDown);
+        canvas.removeEventListener('pointermove',  onPointerMove);
+        canvas.removeEventListener('pointerup',    onPointerUp);
+        canvas.removeEventListener('pointercancel', onPointerUp);
+        document.body.style.userSelect = '';
+        if (resumeTimer) clearTimeout(resumeTimer);
+      }
     };
   }, [glbPath, accent, accent2, mode, rotations, triggerStart, triggerEnd, modelOffsetX, driveInFromX]);
 
