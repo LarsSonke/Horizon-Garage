@@ -224,7 +224,14 @@ export default function ScrollCar({
         model = obj;
         baseX = model.position.x;
         if (mode === 'drivein') model.position.x = baseX + currentDriveX;
-        setLoaded(true);
+
+        // Pre-compile every shader program before the first visible frame.
+        // Without this the GPU compiles shaders on the first draw call, causing
+        // a freeze. compileAsync is non-blocking so it happens while the
+        // loading bar is still showing — invisible to the user.
+        renderer.compileAsync(scene, camera)
+          .catch(() => {/* noop — fall through to setLoaded regardless */})
+          .finally(() => { if (!disposed) setLoaded(true); });
       })
       .catch((err) => console.error('ScrollCar: load failed', err));
 
