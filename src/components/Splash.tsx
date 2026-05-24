@@ -1,32 +1,61 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import gsap from 'gsap';
 
-export default function Splash({ onDone }) {
-  const ref = useRef(null);
+interface SplashProps {
+  onDone: () => void;
+  loadProgress?: number; // 0 → 1
+}
 
+export default function Splash({ onDone, loadProgress = 1 }: SplashProps) {
+  const ref    = useRef<HTMLDivElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  // Shared mutable state — avoids stale-closure issues across effects
+  const state = useRef({ animDone: false, exiting: false });
+
+  // Keep onDone stable inside the exit animation callback
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
+
+  // Call once both the animation AND all models are ready
+  const tryExit = useCallback(() => {
+    if (!state.current.animDone || state.current.exiting) return;
+    state.current.exiting = true;
+    gsap.to(ref.current, {
+      opacity: 0, scale: 1.04, duration: 0.7, ease: 'power3.in',
+      onComplete: () => onDoneRef.current(),
+    });
+  }, []);
+
+  // Drive the bar with real load progress
+  useEffect(() => {
+    if (barRef.current) {
+      gsap.to(barRef.current, {
+        scaleX: loadProgress,
+        duration: 0.25,
+        ease: 'power1.out',
+        overwrite: true,
+      });
+    }
+    if (loadProgress >= 1) tryExit();
+  }, [loadProgress, tryExit]);
+
+  // Splash animation — onComplete marks animation done and checks if we can exit
   useEffect(() => {
     const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        onComplete: () => {
-          gsap.to(ref.current, {
-            opacity: 0, scale: 1.04, duration: 0.7, ease: 'power3.in', onComplete: onDone,
-          });
-        },
-      });
-
-      tl.from('.splash-corner', { scale: 0, opacity: 0, duration: 0.4, stagger: 0.08, ease: 'back.out(1.5)' })
-        .from('.splash-h',        { clipPath: 'inset(0 100% 0 0)', duration: 0.9, ease: 'expo.out' }, 0.1)
-        .from('.splash-g',        { clipPath: 'inset(0 100% 0 0)', duration: 0.9, ease: 'expo.out' }, 0.3)
-        .from('.splash-sub',      { opacity: 0, y: 12, duration: 0.5 }, 0.7)
-        .fromTo('.splash-bar-fill',
-          { scaleX: 0, transformOrigin: 'left' },
-          { scaleX: 1, duration: 1.5, ease: 'power2.inOut' }, 0.9)
-        .from('.splash-ready', { opacity: 0, duration: 0.3 }, 2.1)
+      gsap.timeline({
+        onComplete: () => { state.current.animDone = true; tryExit(); },
+      })
+        .from('.splash-corner', { scale: 0, opacity: 0, duration: 0.4, stagger: 0.08, ease: 'back.out(1.5)' })
+        .from('.splash-h',      { clipPath: 'inset(0 100% 0 0)', duration: 0.9, ease: 'expo.out' }, 0.1)
+        .from('.splash-g',      { clipPath: 'inset(0 100% 0 0)', duration: 0.9, ease: 'expo.out' }, 0.3)
+        .from('.splash-sub',    { opacity: 0, y: 12, duration: 0.5 }, 0.7)
+        .from('.splash-ready',  { opacity: 0, duration: 0.3 }, 2.1)
         .to({}, { duration: 0.4 });
     }, ref);
 
     return () => ctx.revert();
-  }, [onDone]);
+  }, [tryExit]);
 
   return (
     <div ref={ref} className="splash">
@@ -69,8 +98,14 @@ export default function Splash({ onDone }) {
 
         <div className="mx-auto relative" style={{ width: 300, height: 2, background: 'rgba(255,255,255,0.08)' }}>
           <div
-            className="splash-bar-fill absolute inset-y-0 left-0 right-0"
-            style={{ background: 'linear-gradient(90deg, #007FFF, #60a5fa)', boxShadow: '0 0 14px #007FFF' }}
+            ref={barRef}
+            className="absolute inset-y-0 left-0 right-0"
+            style={{
+              background: 'linear-gradient(90deg, #007FFF, #60a5fa)',
+              boxShadow: '0 0 14px #007FFF',
+              transformOrigin: 'left',
+              transform: 'scaleX(0)',
+            }}
           />
         </div>
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, useScroll } from 'framer-motion';
 import { CARS } from './data/cars';
+import { preloadAll } from './lib/ScrollCar';
 import TopNav from './components/TopNav';
 import Marquee from './components/Marquee';
 import Splash from './components/Splash';
@@ -52,7 +53,13 @@ function ScrollProgress() {
 
 export default function App() {
   const [splashDone, setSplashDone] = useState(false);
+  const [glbProgress, setGlbProgress] = useState(0);
   const [heroIdx, setHeroIdx] = useState(0);
+
+  useEffect(() => {
+    const paths = CARS.filter(c => c.glbPath).map(c => c.glbPath!);
+    preloadAll(paths, setGlbProgress);
+  }, []);
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   const startTimer = useCallback(() => {
@@ -94,7 +101,7 @@ export default function App() {
       <CursorSpotlight />
       <ScrollProgress />
 
-      {!splashDone && <Splash onDone={() => setSplashDone(true)} />}
+      {!splashDone && <Splash onDone={() => setSplashDone(true)} loadProgress={glbProgress} />}
 
       <TopNav />
 

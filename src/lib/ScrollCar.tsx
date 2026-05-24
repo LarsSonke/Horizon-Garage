@@ -44,9 +44,25 @@ async function _loadGLB(path: string, onProgress?: (pct: number) => void): Promi
   return (await _pending.get(path)!).clone();
 }
 
-/** Call early (e.g. on Hero mount) to warm the cache before ScrollCar needs it. */
+/** Warm a single GLB in the background. */
 export function preloadGLB(path: string): void {
   if (!_cache.has(path) && !_pending.has(path)) _loadGLB(path);
+}
+
+/** Preload multiple GLBs and report overall 0→1 progress. */
+export function preloadAll(paths: string[], onProgress: (pct: number) => void): Promise<void> {
+  const pcts = new Array(paths.length).fill(0) as number[];
+  const notify = () => onProgress(pcts.reduce((a, b) => a + b, 0) / paths.length);
+
+  const promises = paths.map((path, i) => {
+    if (_cache.has(path)) { pcts[i] = 1; return Promise.resolve(); }
+    return _loadGLB(path, (p) => { pcts[i] = p; notify(); })
+      .then(() => { pcts[i] = 1; notify(); })
+      .catch(() => { pcts[i] = 1; notify(); }); // don't let one failure stall others
+  });
+
+  notify();
+  return Promise.all(promises).then(() => onProgress(1));
 }
 
 interface ScrollCarProps {
