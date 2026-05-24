@@ -18,6 +18,81 @@ function formatPlate(raw: string): string {
   return groups.join('-');
 }
 
+// ─── Car data — makes with logo domains, models per make ─────────────────────
+
+const CAR_MAKES = [
+  { name: 'Alfa Romeo',    domain: 'alfaromeo.com' },
+  { name: 'Aston Martin',  domain: 'astonmartin.com' },
+  { name: 'Audi',          domain: 'audi.com' },
+  { name: 'Bentley',       domain: 'bentleymotors.com' },
+  { name: 'BMW',           domain: 'bmw.com' },
+  { name: 'Bugatti',       domain: 'bugatti.com' },
+  { name: 'Cadillac',      domain: 'cadillac.com' },
+  { name: 'Chevrolet',     domain: 'chevrolet.com' },
+  { name: 'Dodge',         domain: 'dodge.com' },
+  { name: 'Ferrari',       domain: 'ferrari.com' },
+  { name: 'Ford',          domain: 'ford.com' },
+  { name: 'Honda',         domain: 'honda.com' },
+  { name: 'Hyundai',       domain: 'hyundai.com' },
+  { name: 'Jaguar',        domain: 'jaguar.com' },
+  { name: 'Koenigsegg',    domain: 'koenigsegg.com' },
+  { name: 'Lamborghini',   domain: 'lamborghini.com' },
+  { name: 'Land Rover',    domain: 'landrover.com' },
+  { name: 'Lexus',         domain: 'lexus.com' },
+  { name: 'Lotus',         domain: 'lotuscars.com' },
+  { name: 'Maserati',      domain: 'maserati.com' },
+  { name: 'Mazzanti',      domain: 'mazzanti.it' },
+  { name: 'McLaren',       domain: 'mclaren.com' },
+  { name: 'Mercedes-Benz', domain: 'mercedes-benz.com' },
+  { name: 'Nissan',        domain: 'nissan.com' },
+  { name: 'Pagani',        domain: 'pagani.com' },
+  { name: 'Porsche',       domain: 'porsche.com' },
+  { name: 'Renault',       domain: 'renault.com' },
+  { name: 'Rolls-Royce',   domain: 'rolls-roycemotorcars.com' },
+  { name: 'Seat',          domain: 'seat.com' },
+  { name: 'Skoda',         domain: 'skoda-auto.com' },
+  { name: 'Subaru',        domain: 'subaru.com' },
+  { name: 'Toyota',        domain: 'toyota.com' },
+  { name: 'Volkswagen',    domain: 'vw.com' },
+  { name: 'Volvo',         domain: 'volvocars.com' },
+];
+
+const CAR_MODELS: Record<string, string[]> = {
+  'Alfa Romeo':    ['Giulia', 'Giulia Quadrifoglio', 'Stelvio', 'Stelvio Quadrifoglio', '4C', 'GTV'],
+  'Aston Martin':  ['DB11', 'DB12', 'DBS', 'Vantage', 'Vantage AMR', 'Vanquish', 'DBX', 'Valkyrie', 'Vulcan'],
+  'Audi':          ['R8', 'R8 V10', 'RS3', 'RS4', 'RS4 Avant', 'RS5', 'RS6', 'RS6 Avant', 'RS6 GT', 'RS7', 'TT RS', 'S3', 'S4', 'S5', 'A4', 'A6', 'Q5', 'Q7', 'e-tron GT', 'RS e-tron GT'],
+  'Bentley':       ['Continental GT', 'Continental GT Speed', 'Continental GTC', 'Flying Spur', 'Bentayga', 'Mulliner'],
+  'BMW':           ['M2', 'M3', 'M3 Competition', 'M4', 'M4 Competition', 'M5', 'M5 CS', 'M8', 'M8 Gran Coupé', 'X5 M', 'X6 M', '1 Series', '3 Series', '5 Series', 'i4 M50', 'iX M60'],
+  'Bugatti':       ['Chiron', 'Chiron Super Sport', 'Chiron Pur Sport', 'Veyron', 'Bolide', 'Tourbillon'],
+  'Chevrolet':     ['Corvette', 'Corvette Z06', 'Corvette ZR1', 'Camaro ZL1', 'Camaro SS'],
+  'Dodge':         ['Viper', 'Challenger SRT', 'Challenger Hellcat', 'Charger Hellcat'],
+  'Ferrari':       ['296 GTB', '296 GTS', 'SF90 Stradale', 'SF90 Spider', 'F8 Tributo', 'F8 Spider', '812 Superfast', '812 GTS', 'Roma', 'Portofino M', 'Purosangue', 'LaFerrari', '488 Pista'],
+  'Ford':          ['GT', 'Mustang', 'Mustang GT500', 'Mustang Mach 1', 'Focus RS', 'Fiesta ST'],
+  'Honda':         ['NSX', 'Civic Type R', 'Integra Type S', 'S2000'],
+  'Hyundai':       ['i30 N', 'i20 N', 'Elantra N', 'Ioniq 5 N'],
+  'Jaguar':        ['F-Type', 'F-Type R', 'F-Type SVR', 'XE SV Project 8', 'XKR-S'],
+  'Koenigsegg':    ['Agera RS', 'Jesko', 'Jesko Absolut', 'Regera', 'CC850', 'Gemera'],
+  'Lamborghini':   ['Huracán', 'Huracán STO', 'Huracán Tecnica', 'Huracán Evo', 'Urus', 'Urus Performante', 'Revuelto', 'Countach'],
+  'Land Rover':    ['Defender', 'Discovery', 'Range Rover', 'Range Rover Sport', 'Range Rover Velar'],
+  'Lexus':         ['LC 500', 'LC 500h', 'LFA', 'IS 500', 'RC F'],
+  'Lotus':         ['Emira', 'Evija', 'Exige', 'Elise', 'Evora'],
+  'Maserati':      ['MC20', 'GranTurismo', 'GranCabrio', 'Quattroporte', 'Ghibli', 'Levante'],
+  'Mazzanti':      ['Evantra', 'Evantra Millecavalli'],
+  'McLaren':       ['720S', '765LT', 'Artura', 'GT', 'P1', 'Senna', 'Elva', '750S', '600LT'],
+  'Mercedes-Benz': ['AMG GT', 'AMG GT R', 'AMG GT Black Series', 'C 63 AMG', 'E 63 AMG', 'S 63 AMG', 'G 63 AMG', 'GLE 63 AMG', 'SL 63 AMG', 'A 45 AMG', 'CLA 45 AMG', 'AMG ONE'],
+  'Nissan':        ['GT-R', 'GT-R NISMO', '370Z', '400Z', 'Skyline'],
+  'Pagani':        ['Huayra', 'Huayra R', 'Huayra Roadster', 'Zonda', 'Utopia'],
+  'Porsche':       ['911', '911 Carrera', '911 Carrera S', '911 Carrera 4S', '911 Turbo', '911 Turbo S', '911 GT3', '911 GT3 RS', '911 GT3 Touring', '718 Cayman', '718 Cayman GT4', '718 Boxster', 'Taycan', 'Taycan Turbo S', 'Cayenne', 'Cayenne Turbo', 'Macan', 'Panamera', '918 Spyder'],
+  'Renault':       ['Mégane RS', 'Clio RS', 'Alpine A110', 'Zoe'],
+  'Rolls-Royce':   ['Phantom', 'Ghost', 'Wraith', 'Dawn', 'Cullinan', 'Spectre'],
+  'Seat':          ['Leon Cupra', 'Ibiza FR', 'Ateca Cupra'],
+  'Skoda':         ['Octavia RS', 'Kodiaq RS', 'Fabia RS'],
+  'Subaru':        ['WRX STI', 'BRZ', 'Impreza WRX', 'Forester XT'],
+  'Toyota':        ['GR Supra', 'GR86', 'GR Yaris', 'Celica', 'MR2'],
+  'Volkswagen':    ['Golf R', 'Golf GTI', 'Polo GTI', 'Arteon R', 'Scirocco R'],
+  'Volvo':         ['V60 Polestar', 'S60 Polestar', 'XC40 Recharge', 'C40'],
+};
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type BookingData = {
@@ -140,6 +215,95 @@ async function sendEmails(data: BookingData, reference: string) {
       ...common,
     }, pub);
   }
+}
+
+// ─── Autocomplete ─────────────────────────────────────────────────────────────
+
+interface AcOption { label: string; logo?: string; }
+
+function Autocomplete({ value, onChange, onSelect, options, placeholder }: {
+  value: string;
+  onChange: (v: string) => void;
+  onSelect: (v: string) => void;
+  options: AcOption[];
+  placeholder?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [cursor, setCursor] = useState(-1);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const filtered = value.trim().length > 0
+    ? options.filter(o => o.label.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
+    : [];
+
+  useEffect(() => { setCursor(-1); }, [value]);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, []);
+
+  const pick = (opt: AcOption) => { onSelect(opt.label); setOpen(false); setCursor(-1); };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (!open || filtered.length === 0) return;
+    if (e.key === 'ArrowDown')  { e.preventDefault(); setCursor(c => Math.min(c + 1, filtered.length - 1)); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); setCursor(c => Math.max(c - 1, 0)); }
+    else if (e.key === 'Enter' && cursor >= 0) { e.preventDefault(); pick(filtered[cursor]); }
+    else if (e.key === 'Escape') setOpen(false);
+  };
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <input
+        className="form-input w-full"
+        placeholder={placeholder}
+        value={value}
+        onChange={e => { onChange(e.target.value); setOpen(true); }}
+        onFocus={() => { if (value.trim().length > 0) setOpen(true); }}
+        onKeyDown={onKeyDown}
+        autoComplete="off"
+        spellCheck={false}
+      />
+      <AnimatePresence>
+        {open && filtered.length > 0 && (
+          <motion.ul
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.12 }}
+            className="absolute z-50 top-full left-0 right-0 mt-1 border border-white/10 overflow-hidden overflow-y-auto"
+            style={{ background: '#0e0e0e', boxShadow: '0 20px 48px rgba(0,0,0,0.7)', maxHeight: 240 }}
+          >
+            {filtered.map((opt, i) => (
+              <li
+                key={opt.label}
+                onMouseDown={() => pick(opt)}
+                onMouseEnter={() => setCursor(i)}
+                className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
+                style={{ background: i === cursor ? 'rgba(0,127,255,0.12)' : 'transparent' }}
+              >
+                {opt.logo && (
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded-sm overflow-hidden bg-white/5">
+                    <img
+                      src={opt.logo}
+                      alt=""
+                      className="max-w-full max-h-full object-contain"
+                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  </div>
+                )}
+                <span className="text-sm text-white/85">{opt.label}</span>
+              </li>
+            ))}
+          </motion.ul>
+        )}
+      </AnimatePresence>
+    </div>
+  );
 }
 
 // ─── Plate Input ──────────────────────────────────────────────────────────────
@@ -485,15 +649,35 @@ function ServiceStep({ data, update, onNext, dir }: { data: BookingData; update:
 
 function VehicleStep({ data, update, onNext, onBack, dir }: any) {
   const valid = data.make && data.model && data.year;
+
+  const makeOptions: AcOption[] = CAR_MAKES.map(m => ({
+    label: m.name,
+    logo: `https://logo.clearbit.com/${m.domain}`,
+  }));
+
+  const modelOptions: AcOption[] = (CAR_MODELS[data.make] ?? []).map(m => ({ label: m }));
+
   return (
     <StepWrap dir={dir}>
       <p className="text-white/50 text-sm mb-6">Tell us about the vehicle.</p>
       <div className="grid sm:grid-cols-2 gap-4">
         <Field label="Make" required>
-          <input className="form-input" placeholder="e.g. Porsche" value={data.make} onChange={e => update({ make: e.target.value })} required />
+          <Autocomplete
+            value={data.make}
+            onChange={v => update({ make: v, model: '' })}
+            onSelect={v => update({ make: v, model: '' })}
+            options={makeOptions}
+            placeholder="e.g. Porsche"
+          />
         </Field>
         <Field label="Model" required>
-          <input className="form-input" placeholder="e.g. 911 GT3" value={data.model} onChange={e => update({ model: e.target.value })} required />
+          <Autocomplete
+            value={data.model}
+            onChange={v => update({ model: v })}
+            onSelect={v => update({ model: v })}
+            options={modelOptions}
+            placeholder={data.make ? `e.g. ${(CAR_MODELS[data.make] ?? ['GT3'])[0]}` : 'Select a make first'}
+          />
         </Field>
         <Field label="Year" required>
           <input className="form-input" placeholder="e.g. 2022" type="number" min="1970" max={new Date().getFullYear() + 1} value={data.year} onChange={e => update({ year: e.target.value })} required />
