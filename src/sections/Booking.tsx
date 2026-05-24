@@ -542,6 +542,20 @@ export default function Booking() {
 
   const update = (patch: Partial<BookingData>) => setData(d => ({ ...d, ...patch }));
 
+  // Listen for service pre-selection from the Services section
+  useEffect(() => {
+    const handler = (e: CustomEvent<{ id: string }>) => {
+      const svc = SERVICES.find(s => s.id === e.detail.id);
+      if (!svc) return;
+      setData(d => ({ ...d, service: svc.id, serviceTitle: svc.title, servicePrice: svc.price }));
+      setDir(1);
+      setStep(2);
+      setConfirmed(false);
+    };
+    window.addEventListener('horizon:select-service', handler as EventListener);
+    return () => window.removeEventListener('horizon:select-service', handler as EventListener);
+  }, []);
+
   const next = () => { setDir(1);  setStep(s => s + 1); };
   const back = () => { setDir(-1); setStep(s => s - 1); };
 

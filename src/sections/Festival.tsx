@@ -5,6 +5,7 @@ const EASE = [0.25, 0.46, 0.45, 0.94];
 
 const SERVICES = [
   {
+    bookingId: 'engine',
     title: 'Engine Diagnostics & Repair',
     desc: 'Full OBD scan, compression and leak-down testing, and hands-on engine work by our senior technicians.',
     icon: (
@@ -15,6 +16,7 @@ const SERVICES = [
     accent: '#FF1E1E',
   },
   {
+    bookingId: 'tuning',
     title: 'Performance Tuning',
     desc: 'ECU remapping, exhaust upgrades, suspension geometry — tuned to your spec on our in-house dyno.',
     icon: (
@@ -25,6 +27,7 @@ const SERVICES = [
     accent: '#007FFF',
   },
   {
+    bookingId: 'bodywork',
     title: 'Bodywork & Paint Correction',
     desc: 'Panel repair, ceramic coating, and multi-stage paint correction to showroom standard.',
     icon: (
@@ -35,6 +38,7 @@ const SERVICES = [
     accent: '#FFBF00',
   },
   {
+    bookingId: 'general',
     title: 'Scheduled Maintenance',
     desc: 'Manufacturer-specified service intervals, oil and fluid changes, filter replacements, and brake inspection.',
     icon: (
@@ -45,6 +49,7 @@ const SERVICES = [
     accent: '#10b981',
   },
   {
+    bookingId: 'brakes',
     title: 'Brake & Suspension',
     desc: 'Pad and disc replacement, caliper rebuilds, alignment, and full suspension overhaul for any budget.',
     icon: (
@@ -55,6 +60,7 @@ const SERVICES = [
     accent: '#a855f7',
   },
   {
+    bookingId: 'prepurchase',
     title: 'Pre-purchase Inspection',
     desc: "Independent 120-point check before you commit. We'll tell you exactly what you're buying.",
     icon: (
@@ -69,6 +75,11 @@ const SERVICES = [
 function ServiceCard({ s, i, inView }: { s: typeof SERVICES[number]; i: number; inView: boolean }) {
   const cardRef  = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
+
+  const handleBook = () => {
+    window.dispatchEvent(new CustomEvent('horizon:select-service', { detail: { id: s.bookingId } }));
+    document.getElementById('booking')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el    = cardRef.current;
@@ -123,7 +134,18 @@ function ServiceCard({ s, i, inView }: { s: typeof SERVICES[number]; i: number; 
         <h3 className="font-display text-2xl leading-tight mb-2" style={{ color: s.accent }}>
           {s.title}
         </h3>
-        <p className="text-white/60 text-sm leading-relaxed">{s.desc}</p>
+        <p className="text-white/60 text-sm leading-relaxed mb-5">{s.desc}</p>
+
+        <button
+          onClick={handleBook}
+          className="btn-cta text-sm flex items-center gap-2 mt-auto"
+          style={{ '--accent': s.accent, fontSize: 12, padding: '8px 14px' } as React.CSSProperties}
+        >
+          Book This Service
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="w-3.5 h-3.5">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
 
         {/* Mouse-follow glare */}
         <div
