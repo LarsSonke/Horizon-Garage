@@ -66,6 +66,23 @@ export default function App() {
     return () => clearInterval(timerRef.current);
   }, [splashDone, startTimer]);
 
+  // Pause the hero cycle while it's scrolled out of view — no point swapping
+  // models (and spinning up WebGL contexts) when the section isn't visible.
+  useEffect(() => {
+    if (!splashDone) return;
+    const el = document.getElementById('showroom');
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) startTimer();
+        else clearInterval(timerRef.current);
+      },
+      { threshold: 0.1 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [splashDone, startTimer]);
+
   const handleSelectCar = useCallback((i: number) => {
     setHeroIdx(i);
     startTimer();
