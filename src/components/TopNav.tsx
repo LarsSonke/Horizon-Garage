@@ -41,7 +41,7 @@ export default function TopNav() {
         transition={{ duration: 0.4 }}
       >
         <a href="#showroom">
-          <img src="/images/horizon-garage-logo.png" alt="Horizon Garage" className="h-14 w-auto" />
+          <img src={`${import.meta.env.BASE_URL}images/horizon-garage-logo.png`} alt="Horizon Garage" className="h-14 w-auto" />
         </a>
 
         <nav className="hidden md:flex items-center gap-8 font-mono text-[11px] tracking-[0.22em] text-white/70 uppercase">

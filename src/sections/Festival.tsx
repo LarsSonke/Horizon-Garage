@@ -171,7 +171,7 @@ export function Footer() {
     <footer className="relative border-t border-white/10 bg-black">
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 grid md:grid-cols-12 gap-8">
         <div className="md:col-span-5">
-          <img src="/images/horizon-garage-logo.png" alt="Horizon Garage" className="h-14 w-auto" />
+          <img src={`${import.meta.env.BASE_URL}images/horizon-garage-logo.png`} alt="Horizon Garage" className="h-14 w-auto" />
           <p className="text-white/55 mt-4 max-w-sm">
             Premium automotive repairs and curated vehicle sales in Amsterdam. Book online or drop us a message.
           </p>

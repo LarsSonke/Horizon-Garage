@@ -1,5 +1,7 @@
 import type { Car } from '../types';
 
+const b = import.meta.env.BASE_URL; // '/' in dev, '/Horizon-Garage/' in prod
+
 export const CARS: Car[] = [
   {
     id: 'porsche',
@@ -13,15 +15,15 @@ export const CARS: Car[] = [
     accent2: '#FF6B00',
     bg: 'radial-gradient(ellipse at 25% 70%, #0f0000 0%, #090000 50%, #040000 100%)',
     price: '€249,000',
-    imgStatic: '/images/porsche-static.png',
-    imgAction: '/images/porsche-driving.png',
+    imgStatic: `${b}images/porsche-static.png`,
+    imgAction: `${b}images/porsche-driving.png`,
     sceneLabel: 'SPECIFICATION · BAY 01',
     stats: { top: 198, speed: 88, handling: 99, accel: 87, launch: 84, brake: 98 },
     powertrain: '4.0L Flat-6 NA · 518 hp',
     drivetrain: 'RWD',
     weight: '1,430 kg',
     zero: '3.4s',
-    glbPath: '/models/992.glb',
+    glbPath: `${b}models/992.glb`,
     model3d: true,
   },
   {
@@ -42,7 +44,7 @@ export const CARS: Car[] = [
     drivetrain: 'AWD',
     weight: '2,075 kg',
     zero: '3.4s',
-    glbPath: '/models/audi.glb',
+    glbPath: `${b}models/audi.glb`,
     model3d: true,
   },
   {
@@ -63,7 +65,7 @@ export const CARS: Car[] = [
     drivetrain: 'RWD',
     weight: '1,250 kg',
     zero: '2.7s',
-    glbPath: '/models/mazzanti.glb',
+    glbPath: `${b}models/mazzanti.glb`,
     model3d: true,
     modelOffsetX: -0.6,
   },
