@@ -22,18 +22,17 @@ interface HeroProps {
   heroIdx: number;
   cars: Car[];
   onSelectCar: (index: number) => void;
+  onCarDragStart?: () => void;
+  onCarDragEnd?: () => void;
 }
 
-export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: HeroProps) {
+export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar, onCarDragStart, onCarDragEnd }: HeroProps) {
   const sectionRef = useRef(null);
 
-  const rawX = useMotionValue(0);
   const rawY = useMotionValue(0);
-  const smoothX = useSpring(rawX, { stiffness: 40, damping: 18 });
   const smoothY = useSpring(rawY, { stiffness: 40, damping: 18 });
+  const hoverPitchRef = useRef(0);
 
-  // Passed into ScrollCar so the Three.js model itself reacts to the mouse
-  const mouseInfluenceRef = useRef({ yaw: 0, pitch: 0, roll: 0 });
   const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
 
   // Swipe left/right to change car on touch devices
@@ -48,21 +47,16 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
   };
 
   useEffect(() => {
-    if (isTouch) return; // no mouse on touch devices
-    const handler = (e) => {
-      const nx = e.clientX / window.innerWidth  - 0.5;
+    if (isTouch) return;
+    const handler = (e: MouseEvent) => {
       const ny = e.clientY / window.innerHeight - 0.5;
-      rawX.set(nx);
       rawY.set(ny);
-      mouseInfluenceRef.current.yaw   =  nx *  0.55;
-      mouseInfluenceRef.current.pitch =  ny *  0.28;
-      mouseInfluenceRef.current.roll  = -nx *  0.10;
+      hoverPitchRef.current = ny * 0.45; // ±0.225 rad (≈±13°) tilt at screen edges
     };
     window.addEventListener('mousemove', handler, { passive: true });
     return () => window.removeEventListener('mousemove', handler);
-  }, [rawX, rawY, isTouch]);
+  }, [rawY, isTouch]);
 
-  const stageOffX = useTransform(smoothX, [-0.5, 0.5], [-16, 16]);
   const stageOffY = useTransform(smoothY, [-0.5, 0.5], [-8, 8]);
 
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end start'] });
@@ -121,8 +115,8 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
         {car.model3d && car.glbPath && (
           <motion.div
             key={`hero-3d-${car.id}`}
-            className="absolute inset-y-0 right-0 w-[82%] z-[1] pointer-events-none"
-            style={{ y: stageScrollY, x: stageOffX }}
+            className="absolute inset-y-0 right-0 w-[82%] z-[1]"
+            style={{ y: stageScrollY }}
             initial={{ opacity: 0, filter: 'blur(20px)' }}
             animate={{ opacity: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, filter: 'blur(20px)', transition: { duration: 0.3 } }}
@@ -135,7 +129,9 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
                 accent2={car.accent2}
                 mode="auto"
                 modelOffsetX={car.modelOffsetX}
-                mouseInfluenceRef={mouseInfluenceRef}
+                onDragStart={onCarDragStart}
+                onDragEnd={onCarDragEnd}
+                hoverPitchRef={hoverPitchRef}
               />
             </motion.div>
           </motion.div>
@@ -149,12 +145,12 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
         style={{ background: 'linear-gradient(to right, #000 0%, rgba(0,0,0,0.88) 26%, rgba(0,0,0,0.48) 50%, transparent 70%)' }}
       />
 
-      <div className="relative z-10 min-h-screen flex flex-col">
+      <div className="relative z-10 min-h-screen flex flex-col pointer-events-none">
         <motion.div
           className="flex-1 grid lg:grid-cols-12 gap-6 px-6 lg:px-12 pt-32 lg:pt-36 pb-8"
           style={{ y: contentY, opacity: contentOp }}
         >
-          <div className="lg:col-span-5 flex flex-col gap-6">
+          <div className="lg:col-span-5 flex flex-col gap-6 pointer-events-auto">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`chip-${car.id}`}
@@ -233,7 +229,7 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
           </div>
         </motion.div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex gap-3 pointer-events-auto">
           {cars.map((c, i) => (
             <button key={c.id} onClick={() => onSelectCar(i)} className="group flex flex-col items-center gap-1">
               <motion.span

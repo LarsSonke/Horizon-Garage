@@ -82,8 +82,10 @@ interface ScrollCarProps {
   modelOffsetX?: number;
   /** drivein mode: how far off-screen the car starts (Three.js units). Default: 15. */
   driveInFromX?: number;
-  /** Ref updated each mousemove — applied as additive pitch / roll / yaw on the model. */
-  mouseInfluenceRef?: React.RefObject<{ yaw: number; pitch: number; roll: number }>;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  /** Ref holding a target pitch (rad) applied when not dragging — for hover tilt. */
+  hoverPitchRef?: React.RefObject<number>;
   className?: string;
 }
 
@@ -98,7 +100,9 @@ export default function ScrollCar({
   triggerEnd = 'bottom bottom',
   modelOffsetX = 0,
   driveInFromX = 15,
-  mouseInfluenceRef,
+  onDragStart,
+  onDragEnd,
+  hoverPitchRef,
   className = '',
 }: ScrollCarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -185,43 +189,67 @@ export default function ScrollCar({
     let targetYaw = initYaw;
     const AUTO_SPEED = 0.18; // rad/sec
 
-    // Mouse-influence lerp targets (additive on top of base rotation)
-    let mYaw = 0, mPitch = 0, mRoll = 0;
-
     // Drive-in state — car starts off-screen LEFT, drives right to center
     let baseX = 0;                                          // resting X, captured after load
     let targetDriveX = mode === 'drivein' ? -driveInFromX : 0;
     let currentDriveX = targetDriveX;
 
     // ─── Drag-to-spin (mode="auto" only) ──────────────────────────────
-    let isDragging    = false;
-    let autoRotating  = true;
-    let yawAtDragStart = 0;
-    let dragStartX    = 0;
-    let dragStartY    = 0;
-    let dragPitch     = 0;      // vertical drag tilt, lerps back to 0 on release
+    let hoverPitch      = 0;   // lerped toward hoverPitchRef when not dragging
+    let isDragging      = false;
+    let autoRotating    = true;
+    let yawAtDragStart  = 0;
+    let dragTotalDelta  = 0;   // cumulative X px since drag start
+    let dragTotalDy     = 0;   // cumulative Y px since drag start
+    let dragPitch       = 0;   // vertical tilt, lerps back to 0 on release
+    let angularVelocity = 0;   // rad/sec — for momentum after release
+    let lastPointerX    = 0;
+    let lastPointerY    = 0;
+    let lastPointerTime = 0;
     let resumeTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const SENS_YAW   = 0.012;  // rad / px  — one full swipe ≈ full spin
+    const SENS_YAW   = 0.012;
     const SENS_PITCH = 0.007;
-    const MAX_PITCH  = 0.65;   // ±37° clamp so car never flips upside-down
+    const MAX_PITCH  = 0.65;
+    const FRICTION   = 4.5;   // velocity decay rate when coasting
 
     const onPointerDown = (e: PointerEvent) => {
       isDragging = true;
       autoRotating = false;
+      angularVelocity = 0;
       yawAtDragStart = currentYaw;
-      dragStartX = e.clientX;
-      dragStartY = e.clientY;
-      canvas.setPointerCapture(e.pointerId); // track even if pointer leaves canvas
+      dragTotalDelta = 0;
+      dragTotalDy = 0;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      lastPointerTime = performance.now();
+      canvas.setPointerCapture(e.pointerId);
       canvas.style.cursor = 'grabbing';
       document.body.style.userSelect = 'none';
       if (resumeTimer) { clearTimeout(resumeTimer); resumeTimer = null; }
+      onDragStart?.();
     };
 
     const onPointerMove = (e: PointerEvent) => {
       if (!isDragging) return;
-      currentYaw  = yawAtDragStart + (e.clientX - dragStartX) * SENS_YAW;
-      dragPitch   = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, (e.clientY - dragStartY) * SENS_PITCH));
+      const now = performance.now();
+      const dtMs = now - lastPointerTime;
+      const dxPx = e.clientX - lastPointerX;
+      const dyPx = e.clientY - lastPointerY;
+
+      dragTotalDelta += dxPx;
+      dragTotalDy    += dyPx;
+      currentYaw = yawAtDragStart + dragTotalDelta * SENS_YAW;
+      dragPitch  = Math.max(-MAX_PITCH, Math.min(MAX_PITCH, dragTotalDy * SENS_PITCH));
+
+      if (dtMs > 0) {
+        const instVel = (dxPx / (dtMs / 1000)) * SENS_YAW;
+        angularVelocity = angularVelocity * 0.4 + instVel * 0.6;
+      }
+
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      lastPointerTime = now;
     };
 
     const onPointerUp = () => {
@@ -229,7 +257,8 @@ export default function ScrollCar({
       isDragging = false;
       canvas.style.cursor = 'grab';
       document.body.style.userSelect = '';
-      resumeTimer = setTimeout(() => { autoRotating = true; }, 2500);
+      onDragEnd?.();
+      resumeTimer = setTimeout(() => { autoRotating = true; }, 1000);
     };
 
     if (mode === 'auto') {
@@ -349,22 +378,26 @@ export default function ScrollCar({
 
       if (!visible || document.hidden) return;
 
-      // Lerp mouse influence toward latest ref values
-      if (mouseInfluenceRef?.current) {
-        const inf = mouseInfluenceRef.current;
-        const s = Math.min(1, dt * 2.2);
-        mYaw   += (inf.yaw   - mYaw)   * s;
-        mPitch += (inf.pitch - mPitch) * s;
-        mRoll  += (inf.roll  - mRoll)  * s;
-      }
-
       floatT += dt;
 
       if (model) {
         if (mode === 'auto') {
-          if (!isDragging && autoRotating) currentYaw += dt * AUTO_SPEED;
-          // Lerp drag pitch back to neutral after release
-          if (!isDragging) dragPitch += (0 - dragPitch) * Math.min(1, dt * 4);
+          if (isDragging) {
+            // currentYaw set directly in onPointerMove
+          } else if (!autoRotating) {
+            // Coast: apply momentum with friction decay
+            angularVelocity += (0 - angularVelocity) * Math.min(1, dt * FRICTION);
+            currentYaw += angularVelocity * dt;
+          } else {
+            // Auto-rotate: smoothly blend velocity toward AUTO_SPEED
+            angularVelocity += (AUTO_SPEED - angularVelocity) * Math.min(1, dt * 2);
+            currentYaw += angularVelocity * dt;
+          }
+          if (!isDragging) {
+            dragPitch += (0 - dragPitch) * Math.min(1, dt * 4);
+            const targetHover = hoverPitchRef?.current ?? 0;
+            hoverPitch += (targetHover - hoverPitch) * Math.min(1, dt * 3);
+          }
         } else {
           currentYaw += (targetYaw - currentYaw) * Math.min(1, dt * 7);
         }
@@ -372,9 +405,9 @@ export default function ScrollCar({
           currentDriveX += (targetDriveX - currentDriveX) * Math.min(1, dt * 5);
           model.position.x = baseX + currentDriveX;
         }
-        model.rotation.y = currentYaw + (isDragging ? 0 : mYaw);
-        model.rotation.x = dragPitch + (isDragging ? 0 : mPitch);
-        model.rotation.z = isDragging ? 0 : mRoll;
+        model.rotation.y = currentYaw;
+        model.rotation.x = dragPitch + (isDragging ? 0 : hoverPitch);
+        model.rotation.z = 0;
         model.position.y = Math.sin(floatT * 0.65) * 0.055;
       }
 

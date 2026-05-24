@@ -70,6 +70,8 @@ export default function App() {
     timerRef.current = setInterval(() => setHeroIdx(i => (i + 1) % CARS.length), 9000);
   }, []);
 
+  const pauseTimer = useCallback(() => { clearInterval(timerRef.current); }, []);
+
   useEffect(() => {
     if (!splashDone) return;
     startTimer();
@@ -114,6 +116,8 @@ export default function App() {
         heroIdx={heroIdx}
         cars={CARS}
         onSelectCar={handleSelectCar}
+        onCarDragStart={pauseTimer}
+        onCarDragEnd={startTimer}
       />
 
       <Marquee items={MARQUEE_ITEMS} speed={32} />
