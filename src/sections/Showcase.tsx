@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ScrollCar from '../lib/ScrollCar';
+import EnquiryDrawer from '../components/EnquiryDrawer';
 import type { Car } from '../types';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -12,6 +13,7 @@ const EASE: [number, number, number, number] = [0.25, 0.46, 0.45, 0.94];
 export default function Showcase({ cars }: { cars: Car[] }) {
   const rootRef = useRef<HTMLElement>(null);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [enquiryCar, setEnquiryCar] = useState<Car | null>(null);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
@@ -90,9 +92,16 @@ export default function Showcase({ cars }: { cars: Car[] }) {
             car={c}
             index={i}
             refSetter={(el) => (sectionRefs.current[i] = el)}
+            onEnquire={setEnquiryCar}
           />
         ))}
       </div>
+
+      <AnimatePresence>
+        {enquiryCar && (
+          <EnquiryDrawer car={enquiryCar} onClose={() => setEnquiryCar(null)} />
+        )}
+      </AnimatePresence>
 
       {/* Side index nav */}
       <div className="fixed right-6 top-1/2 -translate-y-1/2 z-30 hidden lg:flex flex-col gap-4">
@@ -121,9 +130,10 @@ interface CarSceneProps {
   car: Car;
   index: number;
   refSetter: (el: HTMLDivElement | null) => void;
+  onEnquire: (c: Car) => void;
 }
 
-function CarScene({ car, index, refSetter }: CarSceneProps) {
+function CarScene({ car, index, refSetter, onEnquire }: CarSceneProps) {
   const outerRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -168,13 +178,13 @@ function CarScene({ car, index, refSetter }: CarSceneProps) {
       </div>
 
       <div className="relative z-10 px-6 lg:px-12 py-24 max-w-xl">
-        <CarMeta car={car} index={index} />
+        <CarMeta car={car} index={index} onEnquire={onEnquire} />
       </div>
     </div>
   );
 }
 
-function CarMeta({ car, index }: { car: Car; index: number }) {
+function CarMeta({ car, index, onEnquire }: { car: Car; index: number; onEnquire: (c: Car) => void }) {
   const specs: [string, string][] = [
     ['POWERTRAIN', car.powertrain],
     ['0 — 60',     car.zero],
@@ -209,9 +219,13 @@ function CarMeta({ car, index }: { car: Car; index: number }) {
         ))}
       </div>
 
-      <a href="#booking" className="btn-cta primary inline-block" style={{ '--accent': car.accent }}>
+      <button
+        onClick={() => onEnquire(car)}
+        className="btn-cta primary inline-block"
+        style={{ '--accent': car.accent } as React.CSSProperties}
+      >
         Enquire About This Car
-      </a>
+      </button>
     </div>
   );
 }
