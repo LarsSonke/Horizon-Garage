@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -125,29 +125,48 @@ interface CarSceneProps {
 
 function CarScene({ car, index, refSetter }: CarSceneProps) {
   const outerRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  // Mount the WebGL renderer only when the section is ~1 viewport away —
+  // gives Three.js time to initialise before the user actually scrolls to it.
+  const attachRef = useCallback((el: HTMLDivElement | null) => {
+    outerRef.current = el;
+    refSetter(el);
+  }, [refSetter]);
+
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setMounted(true); io.disconnect(); } },
+      { rootMargin: '0px 0px 100% 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
   return (
     <div
       id={`scene-${car.id}`}
-      ref={(el) => { outerRef.current = el; refSetter(el); }}
+      ref={attachRef}
       className="relative min-h-screen flex items-center overflow-hidden"
     >
-      {/* Full-viewport-width transparent canvas — car enters from the left screen edge */}
       <div className="absolute inset-0">
-        <ScrollCar
-          glbPath={car.glbPath!}
-          accent={car.accent}
-          accent2={car.accent2}
-          sectionRef={outerRef}
-          mode="drivein"
-          rotations={1}
-          triggerStart="top bottom"
-          triggerEnd="bottom top"
-          modelOffsetX={car.modelOffsetX}
-        />
+        {mounted && (
+          <ScrollCar
+            glbPath={car.glbPath!}
+            accent={car.accent}
+            accent2={car.accent2}
+            sectionRef={outerRef}
+            mode="drivein"
+            rotations={1}
+            triggerStart="top bottom"
+            triggerEnd="bottom top"
+            modelOffsetX={car.modelOffsetX}
+          />
+        )}
       </div>
 
-      {/* Meta panel floats on top of transparent canvas */}
       <div className="relative z-10 px-6 lg:px-12 py-24 max-w-xl">
         <CarMeta car={car} index={index} />
       </div>
