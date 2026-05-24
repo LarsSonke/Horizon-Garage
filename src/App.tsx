@@ -23,7 +23,10 @@ const MARQUEE_ITEMS = [
   'PREMIUM VEHICLES FOR SALE',
 ];
 
+const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+
 function CursorSpotlight() {
+  if (isTouch) return null;
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;

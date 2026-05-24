@@ -34,21 +34,33 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
 
   // Passed into ScrollCar so the Three.js model itself reacts to the mouse
   const mouseInfluenceRef = useRef({ yaw: 0, pitch: 0, roll: 0 });
+  const isTouch = typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches;
+
+  // Swipe left/right to change car on touch devices
+  const touchStartX = useRef(0);
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) < 50) return;
+    onSelectCar(delta < 0
+      ? (heroIdx + 1) % cars.length
+      : (heroIdx - 1 + cars.length) % cars.length);
+  };
 
   useEffect(() => {
+    if (isTouch) return; // no mouse on touch devices
     const handler = (e) => {
-      const nx = e.clientX / window.innerWidth  - 0.5; // -0.5 → 0.5
+      const nx = e.clientX / window.innerWidth  - 0.5;
       const ny = e.clientY / window.innerHeight - 0.5;
       rawX.set(nx);
       rawY.set(ny);
-      // Update model rotation targets (small values = subtle tilt)
-      mouseInfluenceRef.current.yaw   =  nx *  0.55; // ±0.275 rad  (~16°) side bias
-      mouseInfluenceRef.current.pitch =  ny *  0.28; // ±0.14  rad  (~8°)  nose up/down
-      mouseInfluenceRef.current.roll  = -nx *  0.10; // ±0.05  rad  (~3°)  lean
+      mouseInfluenceRef.current.yaw   =  nx *  0.55;
+      mouseInfluenceRef.current.pitch =  ny *  0.28;
+      mouseInfluenceRef.current.roll  = -nx *  0.10;
     };
     window.addEventListener('mousemove', handler, { passive: true });
     return () => window.removeEventListener('mousemove', handler);
-  }, [rawX, rawY]);
+  }, [rawX, rawY, isTouch]);
 
   const stageOffX = useTransform(smoothX, [-0.5, 0.5], [-16, 16]);
   const stageOffY = useTransform(smoothY, [-0.5, 0.5], [-8, 8]);
@@ -89,7 +101,8 @@ export default function Hero({ car, heroReady, heroIdx, cars, onSelectCar }: Her
   ];
 
   return (
-    <section ref={sectionRef} id="showroom" className="relative min-h-screen w-full overflow-hidden">
+    <section ref={sectionRef} id="showroom" className="relative min-h-screen w-full overflow-hidden"
+      onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
       <motion.div
         className="absolute inset-0"
         animate={{ background: car.bg }}
