@@ -273,7 +273,16 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder, showAll
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const filtered = value.trim().length > 0
-    ? options.filter(o => o.label.toLowerCase().includes(value.toLowerCase()))
+    ? options
+        .filter(o => o.label.toLowerCase().includes(value.toLowerCase()))
+        .sort((a, b) => {
+          const q = value.toLowerCase();
+          const aStarts = a.label.toLowerCase().startsWith(q);
+          const bStarts = b.label.toLowerCase().startsWith(q);
+          if (aStarts && !bStarts) return -1;
+          if (!aStarts && bStarts) return 1;
+          return 0;
+        })
     : showAllOnFocus ? options : [];
 
   const visible = filtered.slice(0, showAllOnFocus && value.trim().length === 0 ? options.length : 8);
