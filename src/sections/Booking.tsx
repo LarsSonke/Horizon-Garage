@@ -21,40 +21,79 @@ function formatPlate(raw: string): string {
 // ─── Car data — makes with logo domains, models per make ─────────────────────
 
 const CAR_MAKES = [
+  { name: 'Acura',         domain: 'acura.com' },
   { name: 'Alfa Romeo',    domain: 'alfaromeo.com' },
+  { name: 'Alpina',        domain: 'alpina.de' },
+  { name: 'Alpine',        domain: 'alpinecars.com' },
+  { name: 'Ariel',         domain: 'arielmotor.co.uk' },
   { name: 'Aston Martin',  domain: 'astonmartin.com' },
   { name: 'Audi',          domain: 'audi.com' },
+  { name: 'BAC',           domain: 'bac-mono.com' },
   { name: 'Bentley',       domain: 'bentleymotors.com' },
   { name: 'BMW',           domain: 'bmw.com' },
+  { name: 'Brabus',        domain: 'brabus.com' },
   { name: 'Bugatti',       domain: 'bugatti.com' },
   { name: 'Cadillac',      domain: 'cadillac.com' },
+  { name: 'Caterham',      domain: 'caterhamcars.com' },
   { name: 'Chevrolet',     domain: 'chevrolet.com' },
+  { name: 'Citroën',       domain: 'citroen.com' },
+  { name: 'Cupra',         domain: 'cupraofficial.com' },
+  { name: 'Dacia',         domain: 'dacia.com' },
+  { name: 'De Tomaso',     domain: 'detomaso.com' },
   { name: 'Dodge',         domain: 'dodge.com' },
+  { name: 'DS Automobiles',domain: 'dsautomobiles.com' },
   { name: 'Ferrari',       domain: 'ferrari.com' },
+  { name: 'Fiat',          domain: 'fiat.com' },
   { name: 'Ford',          domain: 'ford.com' },
+  { name: 'Genesis',       domain: 'genesis.com' },
+  { name: 'Ginetta',       domain: 'ginetta.com' },
+  { name: 'GMC',           domain: 'gmc.com' },
   { name: 'Honda',         domain: 'honda.com' },
   { name: 'Hyundai',       domain: 'hyundai.com' },
+  { name: 'Infiniti',      domain: 'infiniti.com' },
   { name: 'Jaguar',        domain: 'jaguar.com' },
+  { name: 'Kia',           domain: 'kia.com' },
   { name: 'Koenigsegg',    domain: 'koenigsegg.com' },
   { name: 'Lamborghini',   domain: 'lamborghini.com' },
+  { name: 'Lancia',        domain: 'lancia.com' },
   { name: 'Land Rover',    domain: 'landrover.com' },
   { name: 'Lexus',         domain: 'lexus.com' },
   { name: 'Lotus',         domain: 'lotuscars.com' },
+  { name: 'Lucid',         domain: 'lucidmotors.com' },
   { name: 'Maserati',      domain: 'maserati.com' },
   { name: 'Mazzanti',      domain: 'mazzanti.it' },
+  { name: 'Mazda',         domain: 'mazda.com' },
   { name: 'McLaren',       domain: 'mclaren.com' },
   { name: 'Mercedes-Benz', domain: 'mercedes-benz.com' },
+  { name: 'Mini',          domain: 'mini.com' },
+  { name: 'Mitsubishi',    domain: 'mitsubishi-motors.com' },
+  { name: 'Morgan',        domain: 'morgan-motor.co.uk' },
   { name: 'Nissan',        domain: 'nissan.com' },
+  { name: 'Noble',         domain: 'noblem400.com' },
+  { name: 'Opel',          domain: 'opel.com' },
   { name: 'Pagani',        domain: 'pagani.com' },
+  { name: 'Peugeot',       domain: 'peugeot.com' },
+  { name: 'Polestar',      domain: 'polestar.com' },
   { name: 'Porsche',       domain: 'porsche.com' },
+  { name: 'Radical',       domain: 'radicalmotorsport.com' },
   { name: 'Renault',       domain: 'renault.com' },
+  { name: 'Rimac',         domain: 'rimac-automobili.com' },
   { name: 'Rolls-Royce',   domain: 'rolls-roycemotorcars.com' },
   { name: 'Seat',          domain: 'seat.com' },
+  { name: 'Singer',        domain: 'singervehicledesign.com' },
   { name: 'Skoda',         domain: 'skoda-auto.com' },
+  { name: 'Spyker',        domain: 'spykercars.com' },
   { name: 'Subaru',        domain: 'subaru.com' },
+  { name: 'Suzuki',        domain: 'suzuki.com' },
+  { name: 'Tesla',         domain: 'tesla.com' },
   { name: 'Toyota',        domain: 'toyota.com' },
+  { name: 'TVR',           domain: 'tvr.co.uk' },
+  { name: 'Vauxhall',      domain: 'vauxhall.co.uk' },
   { name: 'Volkswagen',    domain: 'vw.com' },
   { name: 'Volvo',         domain: 'volvocars.com' },
+  { name: 'W Motors',      domain: 'wmotors.ae' },
+  { name: 'Wiesmann',      domain: 'wiesmann.com' },
+  { name: 'Zenvo',         domain: 'zenvoautomotive.com' },
 ];
 
 const CAR_MODELS: Record<string, string[]> = {
@@ -221,20 +260,23 @@ async function sendEmails(data: BookingData, reference: string) {
 
 interface AcOption { label: string; logo?: string; }
 
-function Autocomplete({ value, onChange, onSelect, options, placeholder }: {
+function Autocomplete({ value, onChange, onSelect, options, placeholder, showAllOnFocus = false }: {
   value: string;
   onChange: (v: string) => void;
   onSelect: (v: string) => void;
   options: AcOption[];
   placeholder?: string;
+  showAllOnFocus?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState(-1);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   const filtered = value.trim().length > 0
-    ? options.filter(o => o.label.toLowerCase().includes(value.toLowerCase())).slice(0, 8)
-    : [];
+    ? options.filter(o => o.label.toLowerCase().includes(value.toLowerCase()))
+    : showAllOnFocus ? options : [];
+
+  const visible = filtered.slice(0, showAllOnFocus && value.trim().length === 0 ? options.length : 8);
 
   useEffect(() => { setCursor(-1); }, [value]);
 
@@ -249,10 +291,10 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder }: {
   const pick = (opt: AcOption) => { onSelect(opt.label); setOpen(false); setCursor(-1); };
 
   const onKeyDown = (e: React.KeyboardEvent) => {
-    if (!open || filtered.length === 0) return;
-    if (e.key === 'ArrowDown')  { e.preventDefault(); setCursor(c => Math.min(c + 1, filtered.length - 1)); }
+    if (!open || visible.length === 0) return;
+    if (e.key === 'ArrowDown')  { e.preventDefault(); setCursor(c => Math.min(c + 1, visible.length - 1)); }
     else if (e.key === 'ArrowUp')   { e.preventDefault(); setCursor(c => Math.max(c - 1, 0)); }
-    else if (e.key === 'Enter' && cursor >= 0) { e.preventDefault(); pick(filtered[cursor]); }
+    else if (e.key === 'Enter' && cursor >= 0) { e.preventDefault(); pick(visible[cursor]); }
     else if (e.key === 'Escape') setOpen(false);
   };
 
@@ -263,13 +305,13 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder }: {
         placeholder={placeholder}
         value={value}
         onChange={e => { onChange(e.target.value); setOpen(true); }}
-        onFocus={() => { if (value.trim().length > 0) setOpen(true); }}
+        onFocus={() => setOpen(true)}
         onKeyDown={onKeyDown}
         autoComplete="off"
         spellCheck={false}
       />
       <AnimatePresence>
-        {open && filtered.length > 0 && (
+        {open && visible.length > 0 && (
           <motion.ul
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
@@ -278,7 +320,7 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder }: {
             className="absolute z-50 top-full left-0 right-0 mt-1 border border-white/10 overflow-hidden overflow-y-auto"
             style={{ background: '#0e0e0e', boxShadow: '0 20px 48px rgba(0,0,0,0.7)', maxHeight: 240 }}
           >
-            {filtered.map((opt, i) => (
+            {visible.map((opt, i) => (
               <li
                 key={opt.label}
                 onMouseDown={() => pick(opt)}
@@ -677,6 +719,7 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
             onSelect={v => update({ model: v })}
             options={modelOptions}
             placeholder={data.make ? `e.g. ${(CAR_MODELS[data.make] ?? ['GT3'])[0]}` : 'Select a make first'}
+            showAllOnFocus
           />
         </Field>
         <Field label="Year" required>
