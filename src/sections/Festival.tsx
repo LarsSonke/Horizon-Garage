@@ -218,6 +218,7 @@ export function Footer() {
                 { label: 'Fleet',            href: '#fleet' },
                 { label: 'Services',         href: '#services' },
                 { label: 'Book Appointment', href: '#booking' },
+                { label: 'Products',         href: '#products' },
               ] as const).map(({ label, href }) => (
                 <li key={label}><a href={href} className="hover:text-white transition-colors">{label}</a></li>
               ))}

@@ -11,6 +11,7 @@ import Showcase from './sections/Showcase';
 import Services from './sections/Festival';
 import { Footer } from './sections/Festival';
 import Booking from './sections/Booking';
+import Products from './sections/Products';
 import CustomCursor from './components/CustomCursor';
 import ContactDrawer from './components/ContactDrawer';
 
@@ -137,6 +138,8 @@ export default function App() {
       <Services />
 
       <Booking />
+
+      <Products />
 
       <Footer />
 
