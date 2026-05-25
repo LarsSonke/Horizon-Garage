@@ -585,12 +585,12 @@ export default function Booking() {
   const minDate  = tomorrow.toISOString().split('T')[0];
 
   return (
-    <section id="booking" className="relative py-28 px-6 lg:px-12 border-t border-white/10">
+    <section id="booking" className="relative py-28 px-6 lg:px-12 border-t border-white/10" style={{ background: 'radial-gradient(ellipse at 10% 100%, #00091a 0%, #000409 45%, #010203 100%)' }}>
       <div className="max-w-3xl mx-auto">
 
         {/* Header */}
         <div className="mb-12">
-          <div className="font-mono text-[11px] tracking-[0.3em] text-white/45 uppercase">Book a Repair</div>
+          <div className="font-mono text-[11px] tracking-[0.3em] uppercase" style={{ color: '#007FFF' }}>Book a Repair</div>
           <h2 className="font-display text-6xl md:text-7xl leading-none mt-3">
             {confirmed ? 'You\'re Booked.' : 'Bring It In.'}
           </h2>

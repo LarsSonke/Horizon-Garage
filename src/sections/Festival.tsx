@@ -163,7 +163,7 @@ export default function Services() {
   const inView = useInView(sectionRef, { once: true, margin: '-10% 0px' });
 
   return (
-    <section id="services" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10">
+    <section id="services" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10" style={{ background: 'radial-gradient(ellipse at 90% 0%, #180800 0%, #0c0300 40%, #030100 100%)' }}>
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="mb-14"
@@ -171,7 +171,7 @@ export default function Services() {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.7, ease: EASE }}
         >
-          <div className="font-mono text-[11px] tracking-[0.3em] text-white/45 uppercase">What We Do</div>
+          <div className="font-mono text-[11px] tracking-[0.3em] uppercase" style={{ color: '#f97316' }}>What We Do</div>
           <h2 className="font-display text-6xl md:text-8xl leading-none mt-3">Our Services</h2>
           <p className="text-white/60 max-w-xl mt-4">
             From a quick oil change to a full engine rebuild. We work on performance, classic, and everyday vehicles.
