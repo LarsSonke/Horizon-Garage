@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 
 const EASE = [0.25, 0.46, 0.45, 0.94];
 
@@ -161,12 +161,9 @@ function ServiceCard({ s, i, inView }: { s: typeof SERVICES[number]; i: number; 
 export default function Services() {
   const sectionRef = useRef(null);
   const inView = useInView(sectionRef, { once: true, margin: '-10% 0px' });
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
-  const bgOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
 
   return (
-    <section id="services" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10">
-      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: bgOpacity, background: 'radial-gradient(ellipse at 90% 0%, #200b00 0%, #0e0400 40%, #040100 100%)' }} />
+    <section id="services" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10" style={{ background: 'radial-gradient(ellipse at 75% 50%, #1c0900 0%, #0d0400 50%, #030100 100%)' }}>
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="mb-14"
