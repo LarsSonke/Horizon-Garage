@@ -263,7 +263,7 @@ interface AcOption { label: string; logo?: string; initial?: string; }
 function LogoBadge({ logo, initial }: { logo?: string; initial?: string }) {
   const [failed, setFailed] = useState(false);
   return (
-    <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded border border-white/10 p-0.5">
+    <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded p-0.5" style={{ border: '1px solid rgba(0,127,255,0.35)' }}>
       {logo && !failed ? (
         <img
           src={logo}
