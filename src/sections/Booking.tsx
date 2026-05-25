@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import emailjs from '@emailjs/browser';
 
 // Auto-format Dutch-style plates: groups letters vs numbers and inserts dashes between them.
@@ -584,8 +584,13 @@ export default function Booking() {
   const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate  = tomorrow.toISOString().split('T')[0];
 
+  const sectionRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
+
   return (
-    <section id="booking" className="relative py-28 px-6 lg:px-12 border-t border-white/10" style={{ background: 'radial-gradient(ellipse at 10% 100%, #00091a 0%, #000409 45%, #010203 100%)' }}>
+    <section id="booking" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10">
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: bgOpacity, background: 'radial-gradient(ellipse at 10% 100%, #000d20 0%, #00050e 45%, #010203 100%)' }} />
       <div className="max-w-3xl mx-auto">
 
         {/* Header */}

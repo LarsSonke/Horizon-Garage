@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, useScroll } from 'framer-motion';
+import { motion, useScroll, AnimatePresence } from 'framer-motion';
 import { CARS } from './data/cars';
 import { preloadAll } from './lib/ScrollCar';
 import TopNav from './components/TopNav';
@@ -12,6 +12,7 @@ import Services from './sections/Festival';
 import { Footer } from './sections/Festival';
 import Booking from './sections/Booking';
 import CustomCursor from './components/CustomCursor';
+import ContactDrawer from './components/ContactDrawer';
 
 const MARQUEE_ITEMS = [
   'FREE DIAGNOSTICS WITH ANY BOOKING',
@@ -58,6 +59,13 @@ export default function App() {
   const [splashDone, setSplashDone] = useState(false);
   const [glbProgress, setGlbProgress] = useState(0);
   const [heroIdx, setHeroIdx] = useState(0);
+  const [contactOpen, setContactOpen] = useState(false);
+
+  useEffect(() => {
+    const h = () => setContactOpen(true);
+    window.addEventListener('horizon:open-contact', h);
+    return () => window.removeEventListener('horizon:open-contact', h);
+  }, []);
 
   useEffect(() => {
     const paths = CARS.filter(c => c.glbPath).map(c => c.glbPath!);
@@ -131,6 +139,10 @@ export default function App() {
       <Booking />
 
       <Footer />
+
+      <AnimatePresence>
+        {contactOpen && <ContactDrawer onClose={() => setContactOpen(false)} />}
+      </AnimatePresence>
     </div>
   );
 }

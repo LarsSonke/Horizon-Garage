@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 
 const EASE = [0.25, 0.46, 0.45, 0.94];
 
@@ -161,9 +161,12 @@ function ServiceCard({ s, i, inView }: { s: typeof SERVICES[number]; i: number; 
 export default function Services() {
   const sectionRef = useRef(null);
   const inView = useInView(sectionRef, { once: true, margin: '-10% 0px' });
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start end', 'end start'] });
+  const bgOpacity = useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]);
 
   return (
-    <section id="services" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10" style={{ background: 'radial-gradient(ellipse at 90% 0%, #180800 0%, #0c0300 40%, #030100 100%)' }}>
+    <section id="services" ref={sectionRef} className="relative py-28 px-6 lg:px-12 border-t border-white/10">
+      <motion.div className="absolute inset-0 pointer-events-none" style={{ opacity: bgOpacity, background: 'radial-gradient(ellipse at 90% 0%, #200b00 0%, #0e0400 40%, #040100 100%)' }} />
       <div className="max-w-7xl mx-auto">
         <motion.div
           className="mb-14"
@@ -199,13 +202,13 @@ export function Footer() {
           </p>
 
           <div className="flex gap-3 mt-6">
-            <a
-              href="mailto:service.horizon.garage@gmail.com"
+            <button
               className="btn-cta primary flex items-center gap-2"
-              style={{ '--accent': '#007FFF', fontSize: 14, padding: '10px 18px' }}
+              style={{ '--accent': '#007FFF', fontSize: 14, padding: '10px 18px' } as React.CSSProperties}
+              onClick={() => window.dispatchEvent(new CustomEvent('horizon:open-contact'))}
             >
               Email Us
-            </a>
+            </button>
           </div>
         </div>
 
@@ -252,9 +255,9 @@ export function Footer() {
               <li><span className="cursor-default">Stationsplein 12</span></li>
               <li><span className="cursor-default">1012 AB Amsterdam</span></li>
               <li>
-                <a href="mailto:service.horizon.garage@gmail.com" className="hover:text-white transition-colors normal-case">
+                <button className="hover:text-white transition-colors normal-case text-left" onClick={() => window.dispatchEvent(new CustomEvent('horizon:open-contact'))}>
                   service.horizon.garage@gmail.com
-                </a>
+                </button>
               </li>
             </ul>
           </div>
