@@ -250,7 +250,7 @@ async function sendEmails(data: BookingData, reference: string) {
   // Admin notification
   if (aTpl) {
     await emailjs.send(svc, aTpl, {
-      to_email: import.meta.env.VITE_ADMIN_EMAIL ?? 'contact@horizongarage.com',
+      to_email: 'service.horizon.garage@gmail.com',
       ...common,
     }, pub);
   }

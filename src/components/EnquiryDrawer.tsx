@@ -25,7 +25,7 @@ async function sendEnquiry(car: Car, form: { name: string; email: string; phone:
     customer_name:  form.name,
     customer_email: form.email,
     customer_phone: form.phone || '—',
-    to_email:       import.meta.env.VITE_ADMIN_EMAIL ?? 'contact@horizongarage.com',
+    to_email:       'service.horizon.garage@gmail.com',
   }, pub);
 }
 
