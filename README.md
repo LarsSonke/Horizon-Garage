@@ -1,6 +1,8 @@
 # Horizon Garage
 
-A cinematic automotive portfolio built with React, Three.js, and GSAP. Features scroll-driven 3D car showcases, a service booking form, and a live licence plate preview — all running as a client-side SPA.
+A cinematic automotive portfolio and service booking site — built as a personal project to practise modern frontend development. Fully deployed as a client-side SPA on GitHub Pages.
+
+**[Live Demo →](https://larssonke.github.io/Horizon-Garage/)**
 
 <video src="https://github.com/user-attachments/assets/ee203e22-46d6-485a-bcdf-68d719db340e" autoplay loop muted playsinline width="100%"></video>
 
@@ -11,52 +13,33 @@ A cinematic automotive portfolio built with React, Three.js, and GSAP. Features 
 
 ---
 
-## Features
+## What it demonstrates
 
-- **3D car viewer** — GLB models rendered on a transparent Three.js canvas with accent rim lighting and a subtle float animation
-- **Scroll-driven drive-in** — each car in the Showcase section drives in from off-screen, then rotates as you scroll, powered by GSAP ScrollTrigger
-- **Hero auto-carousel** — cycles through the fleet every 9 seconds; clicking a tab resets the timer
-- **Mouse parallax** — the hero model reacts to cursor position with yaw/pitch/roll tilt
-- **GLB cache** — models are parsed once and cloned on reuse, eliminating stutter when switching cars
-- **Licence plate preview** — live preview with per-country formatting (NL, DE, GB, FR, ES, IT, BE, PL) and a realistic gradient metallic frame
-- **Booking form** — service enquiry sent via EmailJS; validates required fields client-side
-- **Custom cursor & spotlight** — CSS cursor replacement and a radial mouse-follow spotlight
-- **Scroll progress bar** — thin top-of-page indicator driven by Framer Motion `useScroll`
+- **3D in the browser** — GLB car models rendered on a transparent Three.js canvas with drag-to-spin, momentum, and scroll-driven drive-in animations via GSAP ScrollTrigger
+- **Complex state & interactions** — hero carousel with auto-advance timer, drag detection, pointer capture, and IntersectionObserver-based pause/resume
+- **Multi-step form UX** — 5-step booking flow with animated transitions, live licence plate preview (8 countries), vehicle autocomplete with brand logos, and EmailJS integration for real email delivery
+- **Component architecture** — reusable slide-in drawer (enquiry, contact), shared event bus via custom DOM events, shared types across features
+- **CI/CD** — automated Vite build and GitHub Pages deploy via GitHub Actions; environment secrets passed at build time
 
 ---
 
 ## Tech Stack
 
-| Layer | Library |
+| | |
 |---|---|
 | Framework | React 18 + TypeScript |
 | Build | Vite 6 |
-| Styling | Tailwind CSS 3, custom CSS variables |
+| Styling | Tailwind CSS 3 |
 | Animation | Framer Motion 11, GSAP 3 + ScrollTrigger |
 | 3D | Three.js 0.170, GLTFLoader, DRACOLoader |
-| Email | EmailJS Browser |
-| Fonts | Bebas Neue · Space Grotesk · JetBrains Mono |
+| Email | EmailJS |
+| Deploy | GitHub Actions → GitHub Pages |
 
 ---
 
-## Getting Started
-
-**Prerequisites:** Node 18+
+## Run locally
 
 ```bash
-# Install dependencies
 npm install
-
-# Start dev server
-npm run dev
-
-# Production build
-npm run build
-
-# Preview production build
-npm run preview
+npm run dev   # http://localhost:5173
 ```
-
-The dev server runs at `http://localhost:5173` by default.
-
----
