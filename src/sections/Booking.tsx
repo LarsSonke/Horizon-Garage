@@ -18,82 +18,20 @@ function formatPlate(raw: string): string {
   return groups.join('-');
 }
 
-// ─── Car data — makes with logo domains, models per make ─────────────────────
+// ─── Car data — makes and models ─────────────────────────────────────────────
 
 const CAR_MAKES = [
-  { name: 'Acura',         domain: 'acura.com' },
-  { name: 'Alfa Romeo',    domain: 'alfaromeo.com' },
-  { name: 'Alpina',        domain: 'alpina.de' },
-  { name: 'Alpine',        domain: 'alpinecars.com' },
-  { name: 'Ariel',         domain: 'arielmotor.co.uk' },
-  { name: 'Aston Martin',  domain: 'astonmartin.com' },
-  { name: 'Audi',          domain: 'audi.com' },
-  { name: 'BAC',           domain: 'bac-mono.com' },
-  { name: 'Bentley',       domain: 'bentleymotors.com' },
-  { name: 'BMW',           domain: 'bmw.com' },
-  { name: 'Brabus',        domain: 'brabus.com' },
-  { name: 'Bugatti',       domain: 'bugatti.com' },
-  { name: 'Cadillac',      domain: 'cadillac.com' },
-  { name: 'Caterham',      domain: 'caterhamcars.com' },
-  { name: 'Chevrolet',     domain: 'chevrolet.com' },
-  { name: 'Citroën',       domain: 'citroen.com' },
-  { name: 'Cupra',         domain: 'cupraofficial.com' },
-  { name: 'Dacia',         domain: 'dacia.com' },
-  { name: 'De Tomaso',     domain: 'detomaso.com' },
-  { name: 'Dodge',         domain: 'dodge.com' },
-  { name: 'DS Automobiles',domain: 'dsautomobiles.com' },
-  { name: 'Ferrari',       domain: 'ferrari.com' },
-  { name: 'Fiat',          domain: 'fiat.com' },
-  { name: 'Ford',          domain: 'ford.com' },
-  { name: 'Genesis',       domain: 'genesis.com' },
-  { name: 'Ginetta',       domain: 'ginetta.com' },
-  { name: 'GMC',           domain: 'gmc.com' },
-  { name: 'Honda',         domain: 'honda.com' },
-  { name: 'Hyundai',       domain: 'hyundai.com' },
-  { name: 'Infiniti',      domain: 'infiniti.com' },
-  { name: 'Jaguar',        domain: 'jaguar.com' },
-  { name: 'Kia',           domain: 'kia.com' },
-  { name: 'Koenigsegg',    domain: 'koenigsegg.com' },
-  { name: 'Lamborghini',   domain: 'lamborghini.com' },
-  { name: 'Lancia',        domain: 'lancia.com' },
-  { name: 'Land Rover',    domain: 'landrover.com' },
-  { name: 'Lexus',         domain: 'lexus.com' },
-  { name: 'Lotus',         domain: 'lotuscars.com' },
-  { name: 'Lucid',         domain: 'lucidmotors.com' },
-  { name: 'Maserati',      domain: 'maserati.com' },
-  { name: 'Mazzanti',      domain: 'mazzanti.it' },
-  { name: 'Mazda',         domain: 'mazda.com' },
-  { name: 'McLaren',       domain: 'mclaren.com' },
-  { name: 'Mercedes-Benz', domain: 'mercedes-benz.com' },
-  { name: 'Mini',          domain: 'mini.com' },
-  { name: 'Mitsubishi',    domain: 'mitsubishi-motors.com' },
-  { name: 'Morgan',        domain: 'morgan-motor.co.uk' },
-  { name: 'Nissan',        domain: 'nissan.com' },
-  { name: 'Noble',         domain: 'noblem400.com' },
-  { name: 'Opel',          domain: 'opel.com' },
-  { name: 'Pagani',        domain: 'pagani.com' },
-  { name: 'Peugeot',       domain: 'peugeot.com' },
-  { name: 'Polestar',      domain: 'polestar.com' },
-  { name: 'Porsche',       domain: 'porsche.com' },
-  { name: 'Radical',       domain: 'radicalmotorsport.com' },
-  { name: 'Renault',       domain: 'renault.com' },
-  { name: 'Rimac',         domain: 'rimac-automobili.com' },
-  { name: 'Rolls-Royce',   domain: 'rolls-roycemotorcars.com' },
-  { name: 'Seat',          domain: 'seat.com' },
-  { name: 'Singer',        domain: 'singervehicledesign.com' },
-  { name: 'Skoda',         domain: 'skoda-auto.com' },
-  { name: 'Spyker',        domain: 'spykercars.com' },
-  { name: 'Subaru',        domain: 'subaru.com' },
-  { name: 'Suzuki',        domain: 'suzuki.com' },
-  { name: 'Tesla',         domain: 'tesla.com' },
-  { name: 'Toyota',        domain: 'toyota.com' },
-  { name: 'TVR',           domain: 'tvr.co.uk' },
-  { name: 'Vauxhall',      domain: 'vauxhall.co.uk' },
-  { name: 'Volkswagen',    domain: 'vw.com' },
-  { name: 'Volvo',         domain: 'volvocars.com' },
-  { name: 'W Motors',      domain: 'wmotors.ae' },
-  { name: 'Wiesmann',      domain: 'wiesmann.com' },
-  { name: 'Zenvo',         domain: 'zenvoautomotive.com' },
+  'Acura', 'Alfa Romeo', 'Alpina', 'Alpine', 'Ariel', 'Aston Martin', 'Audi',
+  'BAC', 'Bentley', 'BMW', 'Brabus', 'Bugatti', 'Cadillac', 'Caterham',
+  'Chevrolet', 'Citroën', 'Cupra', 'Dacia', 'De Tomaso', 'Dodge', 'DS Automobiles',
+  'Ferrari', 'Fiat', 'Ford', 'Genesis', 'Ginetta', 'GMC', 'Honda', 'Hyundai',
+  'Infiniti', 'Jaguar', 'Kia', 'Koenigsegg', 'Lamborghini', 'Lancia', 'Land Rover',
+  'Lexus', 'Lotus', 'Lucid', 'Maserati', 'Mazzanti', 'Mazda', 'McLaren',
+  'Mercedes-Benz', 'Mini', 'Mitsubishi', 'Morgan', 'Nissan', 'Noble', 'Opel',
+  'Pagani', 'Peugeot', 'Polestar', 'Porsche', 'Radical', 'Renault', 'Rimac',
+  'Rolls-Royce', 'Seat', 'Singer', 'Skoda', 'Spyker', 'Subaru', 'Suzuki',
+  'Tesla', 'Toyota', 'TVR', 'Vauxhall', 'Volkswagen', 'Volvo', 'W Motors',
+  'Wiesmann', 'Zenvo',
 ];
 
 const CAR_MODELS: Record<string, string[]> = {
@@ -258,7 +196,7 @@ async function sendEmails(data: BookingData, reference: string) {
 
 // ─── Autocomplete ─────────────────────────────────────────────────────────────
 
-interface AcOption { label: string; logo?: string; }
+interface AcOption { label: string; initial?: string; }
 
 function Autocomplete({ value, onChange, onSelect, options, placeholder, showAllOnFocus = false }: {
   value: string;
@@ -337,14 +275,9 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder, showAll
                 className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
                 style={{ background: i === cursor ? 'rgba(0,127,255,0.12)' : 'transparent' }}
               >
-                {opt.logo && (
-                  <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded-sm overflow-hidden bg-white/5">
-                    <img
-                      src={opt.logo}
-                      alt=""
-                      className="max-w-full max-h-full object-contain"
-                      onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
+                {opt.initial && (
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded-sm bg-white/8 font-mono text-[10px] font-bold text-white/50">
+                    {opt.initial}
                   </div>
                 )}
                 <span className="text-sm text-white/85">{opt.label}</span>
@@ -716,8 +649,8 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
   const valid = data.make && data.model && data.year;
 
   const makeOptions: AcOption[] = CAR_MAKES.map(m => ({
-    label: m.name,
-    logo: `https://logo.clearbit.com/${m.domain}`,
+    label: m,
+    initial: m[0].toUpperCase(),
   }));
 
   const modelOptions: AcOption[] = (CAR_MODELS[data.make] ?? []).map(m => ({ label: m }));
@@ -961,23 +894,14 @@ function ConfirmationScreen({ data, reference, onReset }: { data: BookingData; r
         Confirmation sent to <span className="text-white">{data.email}</span>
       </p>
       <p className="text-white/35 text-xs mb-10">
-        We'll be in touch to finalise the details. Questions? Call us or drop a WhatsApp.
+        We'll be in touch to finalise the details. Questions? Drop us an email.
       </p>
 
-      {/* Contact quick-links */}
+      {/* Contact quick-link */}
       <div className="flex items-center justify-center gap-3 mb-10">
         <a
-          href="https://wa.me/31643451816"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="mailto:service.horizon.garage@gmail.com"
           className="btn-cta primary flex items-center gap-2"
-          style={{ '--accent': '#25D366', fontSize: 14, padding: '10px 18px' } as React.CSSProperties}
-        >
-          <WhatsAppIcon /> WhatsApp
-        </a>
-        <a
-          href="mailto:contact@horizongarage.com"
-          className="btn-cta flex items-center gap-2"
           style={{ '--accent': '#007FFF', fontSize: 14, padding: '10px 18px' } as React.CSSProperties}
         >
           Email Us
@@ -1040,10 +964,3 @@ function Field({ label, children, required = false, className = '' }: { label: s
   );
 }
 
-function WhatsAppIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 shrink-0">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
-    </svg>
-  );
-}
