@@ -338,12 +338,12 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder, showAll
                 style={{ background: i === cursor ? 'rgba(0,127,255,0.12)' : 'transparent' }}
               >
                 {(opt.logo || opt.initial) && (
-                  <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded-sm overflow-hidden bg-white/8">
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0">
                     {opt.logo ? (
                       <img
                         src={opt.logo}
                         alt=""
-                        className="w-full h-full object-contain p-0.5"
+                        className="w-full h-full object-contain"
                         onError={e => {
                           const img = e.target as HTMLImageElement;
                           img.style.display = 'none';
@@ -352,7 +352,7 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder, showAll
                       />
                     ) : null}
                     <span
-                      className="font-mono text-[10px] font-bold text-white/50 items-center justify-center"
+                      className="font-mono text-[10px] font-bold text-white/40 items-center justify-center"
                       style={{ display: opt.logo ? 'none' : 'flex' }}
                     >
                       {opt.initial}
@@ -729,7 +729,7 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
 
   const makeOptions: AcOption[] = CAR_MAKES.map(m => ({
     label: m.name,
-    logo: `https://www.google.com/s2/favicons?domain=${m.domain}&sz=64`,
+    logo: `https://logo.clearbit.com/${m.domain}`,
     initial: m.name[0].toUpperCase(),
   }));
 
