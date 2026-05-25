@@ -20,18 +20,80 @@ function formatPlate(raw: string): string {
 
 // ─── Car data — makes and models ─────────────────────────────────────────────
 
-const CAR_MAKES = [
-  'Acura', 'Alfa Romeo', 'Alpina', 'Alpine', 'Ariel', 'Aston Martin', 'Audi',
-  'BAC', 'Bentley', 'BMW', 'Brabus', 'Bugatti', 'Cadillac', 'Caterham',
-  'Chevrolet', 'Citroën', 'Cupra', 'Dacia', 'De Tomaso', 'Dodge', 'DS Automobiles',
-  'Ferrari', 'Fiat', 'Ford', 'Genesis', 'Ginetta', 'GMC', 'Honda', 'Hyundai',
-  'Infiniti', 'Jaguar', 'Kia', 'Koenigsegg', 'Lamborghini', 'Lancia', 'Land Rover',
-  'Lexus', 'Lotus', 'Lucid', 'Maserati', 'Mazzanti', 'Mazda', 'McLaren',
-  'Mercedes-Benz', 'Mini', 'Mitsubishi', 'Morgan', 'Nissan', 'Noble', 'Opel',
-  'Pagani', 'Peugeot', 'Polestar', 'Porsche', 'Radical', 'Renault', 'Rimac',
-  'Rolls-Royce', 'Seat', 'Singer', 'Skoda', 'Spyker', 'Subaru', 'Suzuki',
-  'Tesla', 'Toyota', 'TVR', 'Vauxhall', 'Volkswagen', 'Volvo', 'W Motors',
-  'Wiesmann', 'Zenvo',
+const CAR_MAKES: { name: string; domain: string }[] = [
+  { name: 'Acura',          domain: 'acura.com' },
+  { name: 'Alfa Romeo',     domain: 'alfaromeo.com' },
+  { name: 'Alpina',         domain: 'alpina.de' },
+  { name: 'Alpine',         domain: 'alpinecars.com' },
+  { name: 'Ariel',          domain: 'arielmotor.co.uk' },
+  { name: 'Aston Martin',   domain: 'astonmartin.com' },
+  { name: 'Audi',           domain: 'audi.com' },
+  { name: 'BAC',            domain: 'bac-mono.com' },
+  { name: 'Bentley',        domain: 'bentleymotors.com' },
+  { name: 'BMW',            domain: 'bmw.com' },
+  { name: 'Brabus',         domain: 'brabus.com' },
+  { name: 'Bugatti',        domain: 'bugatti.com' },
+  { name: 'Cadillac',       domain: 'cadillac.com' },
+  { name: 'Caterham',       domain: 'caterhamcars.com' },
+  { name: 'Chevrolet',      domain: 'chevrolet.com' },
+  { name: 'Citroën',        domain: 'citroen.com' },
+  { name: 'Cupra',          domain: 'cupraofficial.com' },
+  { name: 'Dacia',          domain: 'dacia.com' },
+  { name: 'De Tomaso',      domain: 'detomaso.com' },
+  { name: 'Dodge',          domain: 'dodge.com' },
+  { name: 'DS Automobiles', domain: 'dsautomobiles.com' },
+  { name: 'Ferrari',        domain: 'ferrari.com' },
+  { name: 'Fiat',           domain: 'fiat.com' },
+  { name: 'Ford',           domain: 'ford.com' },
+  { name: 'Genesis',        domain: 'genesis.com' },
+  { name: 'Ginetta',        domain: 'ginetta.com' },
+  { name: 'GMC',            domain: 'gmc.com' },
+  { name: 'Honda',          domain: 'honda.com' },
+  { name: 'Hyundai',        domain: 'hyundai.com' },
+  { name: 'Infiniti',       domain: 'infiniti.com' },
+  { name: 'Jaguar',         domain: 'jaguar.com' },
+  { name: 'Kia',            domain: 'kia.com' },
+  { name: 'Koenigsegg',     domain: 'koenigsegg.com' },
+  { name: 'Lamborghini',    domain: 'lamborghini.com' },
+  { name: 'Lancia',         domain: 'lancia.com' },
+  { name: 'Land Rover',     domain: 'landrover.com' },
+  { name: 'Lexus',          domain: 'lexus.com' },
+  { name: 'Lotus',          domain: 'lotuscars.com' },
+  { name: 'Lucid',          domain: 'lucidmotors.com' },
+  { name: 'Maserati',       domain: 'maserati.com' },
+  { name: 'Mazzanti',       domain: 'mazzanti.it' },
+  { name: 'Mazda',          domain: 'mazda.com' },
+  { name: 'McLaren',        domain: 'mclaren.com' },
+  { name: 'Mercedes-Benz',  domain: 'mercedes-benz.com' },
+  { name: 'Mini',           domain: 'mini.com' },
+  { name: 'Mitsubishi',     domain: 'mitsubishi-motors.com' },
+  { name: 'Morgan',         domain: 'morgan-motor.co.uk' },
+  { name: 'Nissan',         domain: 'nissan.com' },
+  { name: 'Noble',          domain: 'noblem400.com' },
+  { name: 'Opel',           domain: 'opel.com' },
+  { name: 'Pagani',         domain: 'pagani.com' },
+  { name: 'Peugeot',        domain: 'peugeot.com' },
+  { name: 'Polestar',       domain: 'polestar.com' },
+  { name: 'Porsche',        domain: 'porsche.com' },
+  { name: 'Radical',        domain: 'radicalmotorsport.com' },
+  { name: 'Renault',        domain: 'renault.com' },
+  { name: 'Rimac',          domain: 'rimac-automobili.com' },
+  { name: 'Rolls-Royce',    domain: 'rolls-roycemotorcars.com' },
+  { name: 'Seat',           domain: 'seat.com' },
+  { name: 'Singer',         domain: 'singervehicledesign.com' },
+  { name: 'Skoda',          domain: 'skoda-auto.com' },
+  { name: 'Spyker',         domain: 'spykercars.com' },
+  { name: 'Subaru',         domain: 'subaru.com' },
+  { name: 'Suzuki',         domain: 'suzuki.com' },
+  { name: 'Tesla',          domain: 'tesla.com' },
+  { name: 'Toyota',         domain: 'toyota.com' },
+  { name: 'TVR',            domain: 'tvr.co.uk' },
+  { name: 'Vauxhall',       domain: 'vauxhall.co.uk' },
+  { name: 'Volkswagen',     domain: 'vw.com' },
+  { name: 'Volvo',          domain: 'volvocars.com' },
+  { name: 'W Motors',       domain: 'wmotors.ae' },
+  { name: 'Wiesmann',       domain: 'wiesmann.com' },
+  { name: 'Zenvo',          domain: 'zenvoautomotive.com' },
 ];
 
 const CAR_MODELS: Record<string, string[]> = {
@@ -196,7 +258,7 @@ async function sendEmails(data: BookingData, reference: string) {
 
 // ─── Autocomplete ─────────────────────────────────────────────────────────────
 
-interface AcOption { label: string; initial?: string; }
+interface AcOption { label: string; logo?: string; initial?: string; }
 
 function Autocomplete({ value, onChange, onSelect, options, placeholder, showAllOnFocus = false }: {
   value: string;
@@ -275,9 +337,26 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder, showAll
                 className="flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors"
                 style={{ background: i === cursor ? 'rgba(0,127,255,0.12)' : 'transparent' }}
               >
-                {opt.initial && (
-                  <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded-sm bg-white/8 font-mono text-[10px] font-bold text-white/50">
-                    {opt.initial}
+                {(opt.logo || opt.initial) && (
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0 rounded-sm overflow-hidden bg-white/8">
+                    {opt.logo ? (
+                      <img
+                        src={opt.logo}
+                        alt=""
+                        className="w-full h-full object-contain p-0.5"
+                        onError={e => {
+                          const img = e.target as HTMLImageElement;
+                          img.style.display = 'none';
+                          (img.nextSibling as HTMLElement | null)?.style.setProperty('display', 'flex');
+                        }}
+                      />
+                    ) : null}
+                    <span
+                      className="font-mono text-[10px] font-bold text-white/50 items-center justify-center"
+                      style={{ display: opt.logo ? 'none' : 'flex' }}
+                    >
+                      {opt.initial}
+                    </span>
                   </div>
                 )}
                 <span className="text-sm text-white/85">{opt.label}</span>
@@ -649,8 +728,9 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
   const valid = data.make && data.model && data.year;
 
   const makeOptions: AcOption[] = CAR_MAKES.map(m => ({
-    label: m,
-    initial: m[0].toUpperCase(),
+    label: m.name,
+    logo: `https://www.google.com/s2/favicons?domain=${m.domain}&sz=64`,
+    initial: m.name[0].toUpperCase(),
   }));
 
   const modelOptions: AcOption[] = (CAR_MODELS[data.make] ?? []).map(m => ({ label: m }));
