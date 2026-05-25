@@ -260,6 +260,24 @@ async function sendEmails(data: BookingData, reference: string) {
 
 interface AcOption { label: string; logo?: string; initial?: string; }
 
+function LogoBadge({ logo, initial }: { logo?: string; initial?: string }) {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="w-6 h-6 flex items-center justify-center shrink-0">
+      {logo && !failed ? (
+        <img
+          src={logo}
+          alt=""
+          className="w-full h-full object-contain"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className="font-mono text-[10px] font-bold text-white/40">{initial}</span>
+      )}
+    </div>
+  );
+}
+
 function Autocomplete({ value, onChange, onSelect, options, placeholder, showAllOnFocus = false }: {
   value: string;
   onChange: (v: string) => void;
@@ -338,26 +356,7 @@ function Autocomplete({ value, onChange, onSelect, options, placeholder, showAll
                 style={{ background: i === cursor ? 'rgba(0,127,255,0.12)' : 'transparent' }}
               >
                 {(opt.logo || opt.initial) && (
-                  <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                    {opt.logo ? (
-                      <img
-                        src={opt.logo}
-                        alt=""
-                        className="w-full h-full object-contain"
-                        onError={e => {
-                          const img = e.target as HTMLImageElement;
-                          img.style.display = 'none';
-                          (img.nextSibling as HTMLElement | null)?.style.setProperty('display', 'flex');
-                        }}
-                      />
-                    ) : null}
-                    <span
-                      className="font-mono text-[10px] font-bold text-white/40 items-center justify-center"
-                      style={{ display: opt.logo ? 'none' : 'flex' }}
-                    >
-                      {opt.initial}
-                    </span>
-                  </div>
+                  <LogoBadge logo={opt.logo} initial={opt.initial} />
                 )}
                 <span className="text-sm text-white/85">{opt.label}</span>
               </li>
@@ -729,7 +728,7 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
 
   const makeOptions: AcOption[] = CAR_MAKES.map(m => ({
     label: m.name,
-    logo: `https://img.logo.dev/${m.domain}?token=${import.meta.env.VITE_LOGO_DEV_TOKEN}&size=64`,
+    logo: `https://img.logo.dev/${m.domain}?token=pk_SfsLxaZIQMORByr3utENVg`,
     initial: m.name[0].toUpperCase(),
   }));
 
