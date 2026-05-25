@@ -729,7 +729,7 @@ function VehicleStep({ data, update, onNext, onBack, dir }: any) {
 
   const makeOptions: AcOption[] = CAR_MAKES.map(m => ({
     label: m.name,
-    logo: `https://logo.clearbit.com/${m.domain}`,
+    logo: `https://img.logo.dev/${m.domain}?token=${import.meta.env.VITE_LOGO_DEV_TOKEN}&size=64`,
     initial: m.name[0].toUpperCase(),
   }));
 
